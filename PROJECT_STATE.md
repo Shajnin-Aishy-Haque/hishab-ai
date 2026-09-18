@@ -1,55 +1,75 @@
 # Hishab AI - Living Project State Tracker
 
 > **Authoritative State File**  
-> **Last Updated:** 2026-09-19  
-> **Product Lead / Owner:** Nafis Walid  
-> **Live Production URL:** https://hishab-ai.pages.dev  
+> **Last Updated:** 2026-09-19 02:20 AM BST  
+> **Product Lead / Owner:** Nafis Walid (`nafiswalid.work@gmail.com`)  
+> **Production Live URL:** https://hishab-ai.pages.dev  
+> **GitHub Repository:** https://github.com/Shajnin-Aishy-Haque/hishab-ai  
 
 ---
 
-## 1. Project Overview & Architecture
-Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata application tailored for Bangladesh, featuring Bangla natural language processing, voice entry, and private Google Drive cloud sync.
+## 1. Executive Summary & Architecture
+Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata application built for Bangladesh, featuring Bangla natural language processing, voice logging, and Google Drive cloud sync.
 
-- **Frontend:** React 18 + Vite + TypeScript + Tailwind CSS (Google Material Design 3 theme)
-- **Local Storage:** Dexie.js (IndexedDB v2) with multi-user isolation
-- **Cloud Backup:** Google Drive REST API v3 (scoped to `drive.file` per-app isolation)
-- **Hosting:** Cloudflare Pages (Free tier, zero cost)
-- **Authentication:** Google Identity Services OAuth 2.0 + Instant Local Profile Switcher
-
----
-
-## 2. Completed Milestones (Production Ready)
-- [x] **Zero-Prompt Google OAuth 2.0:** Integrated Google Client ID (`389500978872-fobt5t10s52o1co3h08kjis4tmomnucf.apps.googleusercontent.com`), eliminating raw browser prompts.
-- [x] **Dual-Mode Welcome Gate:** Dedicated "Create Account" (Sign Up) and "Sign In" tabs.
-- [x] **Initial Wallet Onboarding Wizard:** Cash, bKash, Bank, and Nagad balance initialization from scratch.
-- [x] **OAuth Branding Assets:** 120x120 px app logo (`/logo.png`), Privacy Policy (`/privacy`), and Terms of Service (`/terms`).
-- [x] **Automated Cloudflare Pages Deployment:** Live at `https://hishab-ai.pages.dev`.
+- **Frontend:** React 18 + Vite + TypeScript + Tailwind CSS (Material 3 Dark/Light)
+- **Local Database:** Dexie.js (IndexedDB v2) with full multi-user data isolation
+- **Cloud Backup:** Google Drive REST API v3 (scoped to `drive.file`)
+- **Hosting:** Cloudflare Pages (100% Free tier, edge CDN)
+- **Authentication:** Google Identity Services OAuth 2.0 (`389500978872-fobt5t10s52o1co3h08kjis4tmomnucf.apps.googleusercontent.com`) + Instant Local Profile Switcher
+- **Testing:** Native Node.js test runner (`node --test`) with 16 automated unit tests
 
 ---
 
-## 3. Overnight Deep Iteration Roadmap (Autonomous Backlog)
+## 2. Completed Milestones & Changelog
 
-### Cycle 1: Mobile Keyboard & Quick Input Bar Viewport UX
-- Fix viewport clipping when mobile virtual keyboard opens.
-- Ensure Capsule bar floats gracefully above the iOS Safari toolbar and Android Chrome navigation bar.
+### Phase 1: Authentication & Onboarding
+- [x] **Zero-Prompt Google OAuth 2.0**: Integrated official client ID directly, completely eliminating raw browser prompt blockers.
+- [x] **Dual-Mode Welcome Gate**: Dedicated "Create Account" (Sign Up with Name + Email) and "Sign In" tabs.
+- [x] **Wallet Onboarding Wizard**: Automated Cash, bKash, Bank, and Nagad balance initialization modal immediately upon new signup.
+- [x] **Google Cloud Branding Assets**:
+  - App Logo: `https://hishab-ai.pages.dev/logo.png` (120x120 px PNG)
+  - Privacy Policy: `https://hishab-ai.pages.dev/privacy`
+  - Terms of Service: `https://hishab-ai.pages.dev/terms`
 
-### Cycle 2: Dhar Khata & Calculation Edge Cases
-- Support partial debt settlements with timestamped ledger histories.
-- Verify reverse transaction accounting when modifying or deleting Dhar settlements.
-- Bengali numeral parsing (`০-৯` to `0-9`) normalization across all quick entry inputs.
+### Phase 2: Dhar Khata & Double-Entry Accounting Sync
+- [x] **Ledger Synchronization**: Every Dhar creation, repayment, and extra loan increment now automatically creates a corresponding transaction entry in `db.transactions`, keeping wallet balances, transaction feeds, and analytics 100% synchronized.
+- [x] **Installment History Logs**: Added `history: DharPaymentLog[]` to each Dhar item, tracking every partial repayment with date, timestamp, and amount.
+- [x] **Dhar Khata View Enhancements**: Expandable installment history accordions and deletion confirmation for settled accounts.
 
-### Cycle 3: Offline-First Drive Sync & Resiliency
-- Implement an offline queue for transactions created when disconnected from the internet.
-- Auto-sync silently to Google Drive as soon as network connectivity is restored without blocking user interactions.
-- Graceful handling of expired OAuth access tokens with non-intrusive re-authorization prompts.
+### Phase 3: Mobile UX & Touch Optimization
+- [x] **Mobile Send Button**: Added a dedicated touch Submit/Send arrow button inside the Capsule Bar when text is entered, so users don't have to rely on the soft keyboard's Enter key.
+- [x] **1-Tap Quick Preview Submit**: Tapping the floating NLP preview chip now instantly commits the parsed expense.
+- [x] **Camera Memo Optimization**: Added `resizeImageForVision()` to downscale smartphone camera photos to max 1280px before base64 encoding, eliminating mobile browser freezes.
 
-### Cycle 4: Analytics, Category Budgets & Visual Reports
-- Category-wise monthly spend progress indicators.
-- Daily expense trajectory vs budget limits.
-- Clean CSV / JSON backup export and import verification.
+### Phase 4: Resilient Offline-First Sync
+- [x] **Auto Reconnection Sync**: Added window `online` event listener that immediately syncs local IndexedDB snapshots to Google Drive as soon as network connectivity is restored.
+- [x] **16 Automated Regression Tests**: Passing 100% of tests covering Bengali digit conversion, NLP intent parsing, Dhar balance math, snapshot integrity, and CSV UTF-8 BOM encoding.
 
 ---
 
-## 4. Git & Release Sync
-- All updates tracked in git and pushed to GitHub with descriptive semantic commit messages.
-- Continuous deployment to Cloudflare Pages on every verified release.
+## 3. Automated Test Suite Status
+```
+✔ calculates remaining amount correctly on full settlement
+✔ calculates remaining amount correctly on partial repayment
+✔ handles add more loan increments
+✔ validates BackupSnapshot structure
+✔ ensures CSV UTF-8 BOM encoding for Bengali character preservation
+✔ normalizeBanglaDigits converts all Bengali digits to ASCII
+✔ parses standard transport expense with English digits
+✔ parses Bengali digits and grocery category
+✔ detects bKash wallet and food category
+✔ detects Bank card and shopping category
+✔ detects Nagad wallet and utility bills
+✔ detects income with salary keywords
+✔ detects Bengali income (tuition)
+✔ detects Dhar Pabo and cleans recipient name suffix
+✔ detects Dhar Debo and clean store name
+✔ parses decimal amount correctly
+Total: 16 passed, 0 failed.
+```
+
+---
+
+## 4. Git Repository & Deployment
+- **Git Repo:** `https://github.com/Shajnin-Aishy-Haque/hishab-ai`
+- **Cloudflare Pages Production:** `https://hishab-ai.pages.dev`
