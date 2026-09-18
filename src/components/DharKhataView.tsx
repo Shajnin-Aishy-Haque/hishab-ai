@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { DharItem } from '../types';
+import { formatDisplayDate } from '../utils/dateUtils';
 
 interface DharKhataViewProps {
   dharItems: DharItem[];
@@ -207,7 +208,7 @@ export const DharKhataView: React.FC<DharKhataViewProps> = ({
                         </span>
                       </div>
                       <span className="text-xs text-gLight-textSecondary dark:text-gDark-textSecondary truncate">
-                        {item.note || item.date}
+                        {item.note ? `${item.note} • ` : ''}{item.date ? formatDisplayDate(item.date) : ''}
                       </span>
                     </div>
                   </div>
@@ -289,7 +290,7 @@ export const DharKhataView: React.FC<DharKhataViewProps> = ({
                             <div className="flex items-center gap-1.5">
                               <span className={`w-1.5 h-1.5 rounded-full ${log.type === 'repayment' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                               <span>{log.type === 'repayment' ? 'পরিশোধ' : 'যুক্ত ঋণ'}</span>
-                              <span className="text-neutral-400">• {log.date}</span>
+                              <span className="text-neutral-400">• {formatDisplayDate(log.date)} {log.time ? `(${log.time})` : ''}</span>
                             </div>
                             <span className="font-bold text-neutral-800 dark:text-neutral-200">
                               {log.type === 'repayment' ? '-' : '+'}৳{log.amount.toLocaleString('en-IN')}

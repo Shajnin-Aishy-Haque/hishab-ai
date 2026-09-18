@@ -13,14 +13,14 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({
   onOpenAddCategory
 }) => {
   return (
-    <div className="flex-1 px-5 flex flex-col gap-4 pt-3 pb-28 animate-in fade-in duration-150">
+    <div className="flex-1 px-5 flex flex-col gap-4 pt-3 pb-32 animate-in fade-in duration-150">
       <div className="flex items-center justify-between px-1">
         <div>
           <h2 className="text-lg font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">
-            Categories
+            Categories &amp; Budgets
           </h2>
           <span className="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary font-medium">
-            {categories.length} active categories • Synced to Drive
+            {categories.length} active categories • Auto-tracked
           </span>
         </div>
         <button
@@ -35,17 +35,19 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({
       <div className="grid grid-cols-2 gap-3">
         {categories.map((cat) => {
           const spent = transactions
-            .filter((t) => t.type === 'expense' && (t.categoryId === cat.id || t.categoryId.startsWith(cat.id.split('_')[0])))
+            .filter((t) => t.type === 'expense' && (t.categoryId === cat.id || t.categoryId.toLowerCase() === cat.name.toLowerCase()))
             .reduce((sum, t) => sum + t.amount, 0);
 
           const budget = cat.budget || 5000;
-          const percent = Math.min(100, Math.round((spent / budget) * 100));
-          const isWarning = percent >= 80;
+          const rawPercent = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+          const barWidth = Math.min(100, rawPercent);
+          const isOverBudget = rawPercent > 100;
+          const isWarning = rawPercent >= 80 && !isOverBudget;
 
           return (
             <div
               key={cat.id}
-              className="category-card bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-4 flex flex-col justify-between h-32 tap-press shadow-sm border border-black/5 dark:border-white/5 hover:border-gLight-blue/40 dark:hover:border-gDark-blue/40 transition-all cursor-pointer"
+              className="category-card bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-4 flex flex-col justify-between min-h-[140px] tap-press shadow-sm border border-black/5 dark:border-white/5 hover:border-gLight-blue/40 dark:hover:border-gDark-blue/40 transition-all cursor-pointer"
             >
               <div className="flex items-center justify-between">
                 <span className="text-2xl p-1.5 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh">
@@ -53,29 +55,36 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({
                 </span>
                 <span
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    isWarning
+                    isOverBudget
+                      ? 'text-red-500 bg-red-500/10'
+                      : isWarning
                       ? 'text-amber-500 bg-amber-500/10'
                       : 'text-emerald-500 bg-emerald-500/10'
                   }`}
                 >
-                  {percent}% used
+                  {rawPercent}% used
                 </span>
               </div>
-              <div>
-                <div className="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">
+              <div className="mt-2">
+                <div className="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary truncate">
                   {cat.name}
                 </div>
                 <div className="text-[11px] text-gLight-textSecondary dark:text-gDark-textSecondary mt-0.5">
-                  Spent: ৳ {spent.toLocaleString('en-IN')} / ৳ {(budget / 1000).toFixed(0)}k
+                  ৳ {spent.toLocaleString('en-IN')} / ৳ {budget >= 1000 ? `${(budget / 1000).toFixed(0)}k` : budget}
                 </div>
                 <div className="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
                   <div
-                    className="h-full rounded-full"
+                    className="h-full rounded-full transition-all duration-300"
                     style={{
-                      width: `${percent}%`,
-                      backgroundColor: isWarning ? '#f59e0b' : cat.color || '#1a73e8'
+                      width: `${barWidth}%`,
+                      backgroundColor: isOverBudget ? '#ef4444' : isWarning ? '#f59e0b' : cat.color || '#1a73e8'
                     }}
                   ></div>
+                </div>
+                <div className="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary mt-1 truncate">
+                  {isOverBudget
+                    ? `Over by ৳${(spent - budget).toLocaleString('en-IN')}`
+                    : `Left: ৳${(budget - spent).toLocaleString('en-IN')}`}
                 </div>
               </div>
             </div>
@@ -85,7 +94,7 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({
         {/* Quick Add Dashed Card */}
         <div
           onClick={onOpenAddCategory}
-          className="bg-transparent rounded-3xl p-4 flex flex-col items-center justify-center gap-2 h-32 tap-press border-2 border-dashed border-gLight-outline/30 dark:border-gDark-outline/30 hover:border-gLight-blue dark:hover:border-gDark-blue text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-blue dark:hover:text-gDark-blue transition-all cursor-pointer"
+          className="bg-transparent rounded-3xl p-4 flex flex-col items-center justify-center gap-2 min-h-[140px] tap-press border-2 border-dashed border-gLight-outline/30 dark:border-gDark-outline/30 hover:border-gLight-blue dark:hover:border-gDark-blue text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-blue dark:hover:text-gDark-blue transition-all cursor-pointer"
         >
           <div className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
             <span className="material-symbols-outlined text-[20px]">add</span>

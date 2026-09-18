@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import type { Transaction, Account, Category, DharItem, AppSettings, UserProfile } from '../types';
+import { getLocalDateString } from '../utils/dateUtils';
 
 export class HishabDatabase extends Dexie {
   transactions!: Table<Transaction, number>;
@@ -169,7 +170,7 @@ export async function initializeUserData(userId: string = DEFAULT_USER.id, isFro
   if (!isScratchUser) {
     const dharCount = await db.dharItems.where('userId').equals(userId).count();
     if (dharCount === 0) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
       await db.dharItems.bulkAdd([
         {
           userId,
@@ -198,7 +199,7 @@ export async function initializeUserData(userId: string = DEFAULT_USER.id, isFro
 
     const txCount = await db.transactions.where('userId').equals(userId).count();
     if (txCount === 0) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
       await db.transactions.bulkAdd([
         {
           userId,

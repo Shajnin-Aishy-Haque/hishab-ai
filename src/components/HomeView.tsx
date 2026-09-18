@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Account, Category, DharItem, Transaction } from '../types';
+import { getLocalDateString, formatDisplayDate } from '../utils/dateUtils';
 
 interface HomeViewProps {
   accounts: Account[];
@@ -34,10 +35,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onOpenSettleModal,
   onSelectTransactionToEdit
 }) => {
+  const todayStr = getLocalDateString();
+  const currentYearMonth = todayStr.substring(0, 7);
+
   const totalNet = accounts.reduce((sum, a) => sum + a.balance, 0);
 
   const monthlyExpense = transactions
-    .filter((t) => t.type === 'expense')
+    .filter((t) => {
+      if (t.type !== 'expense') return false;
+      const txDate = t.date || getLocalDateString(new Date(t.timestamp));
+      return txDate.startsWith(currentYearMonth);
+    })
     .reduce((sum, t) => sum + t.amount, 0);
 
   const monthlyTarget = categories.reduce((sum, c) => sum + (c.budget || 0), 0) || 35000;
@@ -59,7 +67,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
   });
 
   const todayExpense = transactions
-    .filter((t) => t.type === 'expense' && (t.date === new Date().toISOString().split('T')[0] || !t.date))
+    .filter((t) => {
+      if (t.type !== 'expense') return false;
+      const txDate = t.date || getLocalDateString(new Date(t.timestamp));
+      return txDate === todayStr;
+    })
     .reduce((sum, t) => sum + t.amount, 0);
 
   return (
@@ -353,7 +365,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div className="flex items-center gap-1.5">
             <span>Recent Activity</span>
             <span className="text-gLight-textTertiary dark:text-gDark-textTertiary">
-              • {filteredTransactions.length} items • <strong>৳ {todayExpense.toLocaleString('en-IN')}</strong>
+              • {filteredTransactions.length} items • <span>Today: ৳ {todayExpense.toLocaleString('en-IN')}</span>
             </span>
           </div>
           <button
@@ -374,6 +386,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             filteredTransactions.map((tx) => {
               const isIncome = tx.type === 'income';
               const isTransfer = tx.type === 'transfer';
+              const displayDate = tx.date ? formatDisplayDate(tx.date) : 'আজ';
 
               return (
                 <div
@@ -392,7 +405,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       </span>
                       <span className="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary truncate">
                         {tx.location ? `${tx.location} • ` : ''}
-                        {tx.time || 'Today'}
+                        {displayDate} {tx.time ? `• ${tx.time}` : ''}
                       </span>
                     </div>
                   </div>

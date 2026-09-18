@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { scanReceiptWithGemini, resizeImageForVision, type ScanReceiptResult } from '../services/geminiVision';
+import { getLocalDateString } from '../utils/dateUtils';
 
 interface ReceiptScannerModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
       { name: 'ফার্মের লাল ডিম (১ ডজন)', price: 155 }
     ],
     suggestedCategory: 'bazaar',
-    date: new Date().toISOString().split('T')[0]
+    date: getLocalDateString()
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -1,7 +1,7 @@
 # Hishab AI - Living Project State Tracker
 
 > **Authoritative State File**  
-> **Last Updated:** 2026-09-19 02:20 AM BST  
+> **Last Updated:** 2026-09-19 02:27 AM BST  
 > **Product Lead / Owner:** Nafis Walid (`nafiswalid.work@gmail.com`)  
 > **Production Live URL:** https://hishab-ai.pages.dev  
 > **GitHub Repository:** https://github.com/Shajnin-Aishy-Haque/hishab-ai  
@@ -12,11 +12,12 @@
 Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata application built for Bangladesh, featuring Bangla natural language processing, voice logging, and Google Drive cloud sync.
 
 - **Frontend:** React 18 + Vite + TypeScript + Tailwind CSS (Material 3 Dark/Light)
+- **PWA & Offline:** `vite-plugin-pwa` with precached service worker (SW v0.21.2) + crisp PNG icon manifest for iOS Safari & Android
 - **Local Database:** Dexie.js (IndexedDB v2) with full multi-user data isolation
-- **Cloud Backup:** Google Drive REST API v3 (scoped to `drive.file`)
+- **Cloud Backup:** Google Drive REST API v3 (scoped to `drive.file`) + Local JSON/CSV backups
 - **Hosting:** Cloudflare Pages (100% Free tier, edge CDN)
 - **Authentication:** Google Identity Services OAuth 2.0 (`389500978872-fobt5t10s52o1co3h08kjis4tmomnucf.apps.googleusercontent.com`) + Instant Local Profile Switcher
-- **Testing:** Native Node.js test runner (`node --test`) with 16 automated unit tests
+- **Testing:** Native Node.js test runner (`node --test`) with 27 automated unit tests running in ~90ms
 
 ---
 
@@ -28,8 +29,8 @@ Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata
 - [x] **Wallet Onboarding Wizard**: Automated Cash, bKash, Bank, and Nagad balance initialization modal immediately upon new signup.
 - [x] **Google Cloud Branding Assets**:
   - App Logo: `https://hishab-ai.pages.dev/logo.png` (120x120 px PNG)
-  - Privacy Policy: `https://hishab-ai.pages.dev/privacy`
-  - Terms of Service: `https://hishab-ai.pages.dev/terms`
+  - Privacy Policy: `https://hishab-ai.pages.dev/privacy` & `/privacy.html`
+  - Terms of Service: `https://hishab-ai.pages.dev/terms` & `/terms.html`
 
 ### Phase 2: Dhar Khata & Double-Entry Accounting Sync
 - [x] **Ledger Synchronization**: Every Dhar creation, repayment, and extra loan increment now automatically creates a corresponding transaction entry in `db.transactions`, keeping wallet balances, transaction feeds, and analytics 100% synchronized.
@@ -41,14 +42,43 @@ Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata
 - [x] **1-Tap Quick Preview Submit**: Tapping the floating NLP preview chip now instantly commits the parsed expense.
 - [x] **Camera Memo Optimization**: Added `resizeImageForVision()` to downscale smartphone camera photos to max 1280px before base64 encoding, eliminating mobile browser freezes.
 
-### Phase 4: Resilient Offline-First Sync
-- [x] **Auto Reconnection Sync**: Added window `online` event listener that immediately syncs local IndexedDB snapshots to Google Drive as soon as network connectivity is restored.
-- [x] **16 Automated Regression Tests**: Passing 100% of tests covering Bengali digit conversion, NLP intent parsing, Dhar balance math, snapshot integrity, and CSV UTF-8 BOM encoding.
+### Phase 4: Timezone DISCREPANCY & Date Normalization
+- [x] **Bangladesh (UTC+6) Midnight Fix**: Replaced all `new Date().toISOString().split('T')[0]` calls with a dedicated `getLocalDateString()` and `getLocalTimeString()` in `src/utils/dateUtils.ts`. Eliminated the bug where transactions between 12:00 AM and 5:59 AM BST were incorrectly tagged with yesterday's UTC date.
+- [x] **Monthly Budget Scope Fix**: Scoped `HomeView` and `AnalyticsView` monthly expense sums to the actual current month rather than all-time historical data.
+
+### Phase 5: PWA Standalone Support (iOS & Android)
+- [x] **High-Resolution PNG Icon Suite**: Generated `icon-512.png`, `icon-192.png`, `apple-touch-icon.png` (180x180), and `favicon.png` from original vector artwork.
+- [x] **PWA Manifest & Meta Tags**: Configured `standalone` portrait display, `theme-color: #131314`, `apple-mobile-web-app-capable: yes`, and `apple-mobile-web-app-title: Hishab AI`.
+- [x] **Service Worker Pre-caching**: 12 critical assets (487KB) precached for 100% offline launch speed.
+
+### Phase 6: Analytics & Financial Insights Engine
+- [x] **Dynamic 4-Week Breakdown**: Replaced hardcoded CSS heights with real spending aggregation across Week 1 (days 1-7), Week 2 (days 8-14), Week 3 (days 15-21), and Week 4+ (days 22+). Current week highlighted in real-time.
+- [x] **Cashflow Overview**: Real-time 3-column financial health metric showing Total Income, Total Expense, Net Balance, and Savings Rate percentage.
+- [x] **Category Over-Budget Trajectory**: Highlights overspent categories with a red badge and exact overrun amount.
+
+### Phase 7: Account Balancing & Cross-Wallet Reconciliations
+- [x] **Cross-Account Edit Reversal**: Corrected transaction editing logic so that changing a transaction's payment wallet (e.g. from Cash to bKash) automatically credits the old account and debits the new account without balance corruption.
+- [x] **Wallet Transfer Direction**: Fixed transfer sign rendering in `WalletsView` so incoming transfers show as green `+ ৳` and outgoing as `- ৳`.
+
+### Phase 8: Voice Recognition WebKit Resilience
+- [x] **iOS Safari Lifecycle Management**: Instantiates a fresh `SpeechRecognition` object per session to avoid WebKit `InvalidStateError` when restarting listening.
+- [x] **User-Friendly Error Translation**: Catches `no-speech`, `not-allowed`, and `network` events with natural Bangla prompts.
 
 ---
 
-## 3. Automated Test Suite Status
+## 3. Automated Test Suite Status (27 Tests Passing)
 ```
+✔ reconciles same account expense adjustment (increasing amount)
+✔ reconciles same account expense adjustment (decreasing amount)
+✔ reconciles cross-account wallet change correctly
+✔ computes savings rate and cashflow net correctly
+✔ computes weekly breakdown buckets correctly for a month
+✔ identifies over-budget status and remaining amounts correctly
+✔ getLocalDateString returns valid YYYY-MM-DD formatted string in local time
+✔ getLocalTimeString returns 12-hour formatted time with AM/PM
+✔ isToday returns true for current date and false for other dates
+✔ isYesterday returns true for yesterday and false for today
+✔ formatDisplayDate returns Bengali label for today and yesterday
 ✔ calculates remaining amount correctly on full settlement
 ✔ calculates remaining amount correctly on partial repayment
 ✔ handles add more loan increments
@@ -65,11 +95,12 @@ Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata
 ✔ detects Dhar Pabo and cleans recipient name suffix
 ✔ detects Dhar Debo and clean store name
 ✔ parses decimal amount correctly
-Total: 16 passed, 0 failed.
+Total: 27 passed, 0 failed (Execution: ~95ms).
 ```
 
 ---
 
-## 4. Git Repository & Deployment
+## 4. Production Deployment Status
 - **Git Repo:** `https://github.com/Shajnin-Aishy-Haque/hishab-ai`
 - **Cloudflare Pages Production:** `https://hishab-ai.pages.dev`
+- **Current Release:** v2.0.0 Stable

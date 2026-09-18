@@ -180,6 +180,50 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
+      {/* Legal & App Info */}
+      <div className="bg-gLight-surface dark:bg-gDark-surface rounded-3xl divide-y divide-black/5 dark:divide-white/5 overflow-hidden shadow-sm border border-black/5 dark:border-white/5">
+        <a
+          href="/privacy.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-4 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 tap-press transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-gLight-blue dark:text-gDark-blue text-[20px]">
+              policy
+            </span>
+            <span className="text-sm font-medium text-gLight-textPrimary dark:text-gDark-textPrimary">
+              Privacy Policy
+            </span>
+          </div>
+          <span className="material-symbols-outlined text-[18px] text-gLight-textTertiary dark:text-gDark-textTertiary">
+            open_in_new
+          </span>
+        </a>
+        <a
+          href="/terms.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-4 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 tap-press transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-gLight-blue dark:text-gDark-blue text-[20px]">
+              description
+            </span>
+            <span className="text-sm font-medium text-gLight-textPrimary dark:text-gDark-textPrimary">
+              Terms of Service
+            </span>
+          </div>
+          <span className="material-symbols-outlined text-[18px] text-gLight-textTertiary dark:text-gDark-textTertiary">
+            open_in_new
+          </span>
+        </a>
+        <div className="p-4 flex items-center justify-between">
+          <span className="text-sm font-medium text-gLight-textPrimary dark:text-gDark-textPrimary">App Version</span>
+          <span className="text-xs font-mono text-gLight-textTertiary dark:text-gDark-textTertiary">v2.0.0 (Production)</span>
+        </div>
+      </div>
+
       {/* Gemini Vision Key */}
       <div className="p-4 rounded-3xl bg-gLight-surface dark:bg-gDark-surface border border-black/5 dark:border-white/5 space-y-2.5">
         <span className="text-xs font-bold uppercase tracking-wider text-gLight-textSecondary dark:text-gDark-textSecondary">
@@ -198,7 +242,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           />
           <button
             type="submit"
-            className="w-full py-2 bg-gLight-blue dark:bg-gDark-blue text-white rounded-xl text-xs font-bold tap-press"
+            className="w-full py-2 bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg rounded-xl text-xs font-bold tap-press shadow-sm"
           >
             {isSavingKey ? 'সংরক্ষণ হচ্ছে...' : 'Save API Key'}
           </button>

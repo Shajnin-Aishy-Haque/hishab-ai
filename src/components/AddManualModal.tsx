@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import type { Account, Category, TransactionType } from '../types';
+import { getLocalDateString, getLocalTimeString } from '../utils/dateUtils';
 
 interface AddManualModalProps {
   isOpen: boolean;
-  initialMode: TransactionType;
+  initialMode?: TransactionType;
   accounts: Account[];
   categories: Category[];
   onClose: () => void;
@@ -21,7 +22,7 @@ interface AddManualModalProps {
 
 export const AddManualModal: React.FC<AddManualModalProps> = ({
   isOpen,
-  initialMode,
+  initialMode = 'expense',
   accounts,
   categories,
   onClose,
@@ -41,9 +42,8 @@ export const AddManualModal: React.FC<AddManualModalProps> = ({
     const numAmount = parseFloat(amount);
     if (!numAmount || numAmount <= 0) return;
 
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = getLocalTimeString();
+    const dateStr = getLocalDateString();
 
     onSave({
       type: mode,

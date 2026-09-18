@@ -16,6 +16,7 @@ import {
   downloadFromGoogleDrive
 } from './services/googleDriveApi';
 import { createDatabaseSnapshot, importBackupFile } from './services/driveSync';
+import { getLocalDateString, getLocalTimeString } from './utils/dateUtils';
 
 import { Header } from './components/Header';
 import { HomeView } from './components/HomeView';
@@ -325,9 +326,8 @@ export function App() {
 
   // Handlers for transactions
   const handleAddParsedExpense = async (parsed: ParsedExpense) => {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = getLocalTimeString();
+    const dateStr = getLocalDateString();
 
     if (parsed.type === 'dhar') {
       // Auto create Dhar Khata item
@@ -440,13 +440,28 @@ export function App() {
     await db.transaction('rw', [db.transactions, db.accounts], async () => {
       await db.transactions.put(updated);
 
-      // Reconcile balance
-      const acc = accounts.find((a) => a.id === updated.accountId);
-      if (acc) {
-        const oldDelta = oldTx.type === 'income' ? oldTx.amount : -oldTx.amount;
-        const newDelta = updated.type === 'income' ? updated.amount : -updated.amount;
-        const balanceDiff = newDelta - oldDelta;
-        await db.accounts.update(updated.accountId, { balance: acc.balance + balanceDiff });
+      // Reconcile balance across same or different accounts
+      if (oldTx.accountId === updated.accountId) {
+        const acc = accounts.find((a) => a.id === updated.accountId);
+        if (acc) {
+          const oldDelta = oldTx.type === 'income' ? oldTx.amount : -oldTx.amount;
+          const newDelta = updated.type === 'income' ? updated.amount : -updated.amount;
+          const balanceDiff = newDelta - oldDelta;
+          await db.accounts.update(updated.accountId, { balance: acc.balance + balanceDiff });
+        }
+      } else {
+        // Revert old account balance
+        const oldAcc = accounts.find((a) => a.id === oldTx.accountId);
+        if (oldAcc) {
+          const oldDelta = oldTx.type === 'income' ? oldTx.amount : -oldTx.amount;
+          await db.accounts.update(oldTx.accountId, { balance: oldAcc.balance - oldDelta });
+        }
+        // Apply new account balance
+        const newAcc = accounts.find((a) => a.id === updated.accountId);
+        if (newAcc) {
+          const newDelta = updated.type === 'income' ? updated.amount : -updated.amount;
+          await db.accounts.update(updated.accountId, { balance: newAcc.balance + newDelta });
+        }
       }
     });
 
@@ -475,9 +490,8 @@ export function App() {
     if (!item) return;
 
     const remaining = Math.max(0, item.amount - settleAmount);
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const today = getLocalDateString();
+    const timeStr = getLocalTimeString();
 
     const newLog: DharPaymentLog = {
       id: `pay_${Date.now()}`,
@@ -526,9 +540,8 @@ export function App() {
     const item = dharItems.find((d) => d.id === id);
     if (!item) return;
 
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const today = getLocalDateString();
+    const timeStr = getLocalTimeString();
 
     const newLog: DharPaymentLog = {
       id: `add_${Date.now()}`,
@@ -583,9 +596,8 @@ export function App() {
     note: string;
     accountId: string;
   }) => {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const today = getLocalDateString();
+    const timeStr = getLocalTimeString();
 
     const initialLog: DharPaymentLog = {
       id: `init_${Date.now()}`,
@@ -666,9 +678,8 @@ export function App() {
 
   // Confirm Receipt Scan
   const handleConfirmReceiptScan = async (result: ScanReceiptResult) => {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const dateStr = result.date || now.toISOString().split('T')[0];
+    const timeStr = getLocalTimeString();
+    const dateStr = result.date || getLocalDateString();
 
     const note = result.items.length > 0
       ? `${result.shopName} (${result.items.map((i) => i.name).join(', ').slice(0, 30)}...)`

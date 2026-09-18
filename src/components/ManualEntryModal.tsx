@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Account, Category, TransactionType } from '../types';
+import { getLocalDateString } from '../utils/dateUtils';
 
 interface ManualEntryModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
   const [toAccountId, setToAccountId] = useState(accounts[1]?.id || 'bkash');
   const [categoryId, setCategoryId] = useState(categories[0]?.id || 'bazaar');
   const [dateType, setDateType] = useState<'today' | 'yesterday' | 'custom'>('today');
-  const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
+  const [customDate, setCustomDate] = useState(getLocalDateString());
 
   if (!isOpen) return null;
 
@@ -59,10 +60,11 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
 
     let finalDate = customDate;
     if (dateType === 'today') {
-      finalDate = now.toISOString().split('T')[0];
+      finalDate = getLocalDateString();
     } else if (dateType === 'yesterday') {
-      const y = new Date(Date.now() - 86400000);
-      finalDate = y.toISOString().split('T')[0];
+      const y = new Date();
+      y.setDate(y.getDate() - 1);
+      finalDate = getLocalDateString(y);
     }
 
     onSave({

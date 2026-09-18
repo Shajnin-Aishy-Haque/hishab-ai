@@ -50,12 +50,14 @@ export async function createDatabaseSnapshot(userId?: string): Promise<BackupSna
   };
 }
 
+import { getLocalDateString } from '../utils/dateUtils';
+
 export async function exportBackupFile(userId?: string) {
   const snapshot = await createDatabaseSnapshot(userId);
   const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const dateStr = new Date().toISOString().split('T')[0];
+  const dateStr = getLocalDateString();
   a.href = url;
   a.download = `hishab_ai_backup_${dateStr}.json`;
   document.body.appendChild(a);
@@ -177,7 +179,7 @@ export async function exportCsvReport() {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const dateStr = new Date().toISOString().split('T')[0];
+  const dateStr = getLocalDateString();
   a.href = url;
   a.download = `hishab_ai_report_${dateStr}.csv`;
   document.body.appendChild(a);

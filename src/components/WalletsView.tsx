@@ -180,24 +180,27 @@ export const WalletsView: React.FC<WalletsViewProps> = ({
                     </p>
                   ) : (
                     <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                      {accountTxs.slice(0, 5).map((tx) => (
-                        <div
-                          key={tx.id}
-                          className="py-1.5 px-2 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-between text-xs"
-                        >
-                          <span className="truncate pr-2 font-medium">{tx.note}</span>
-                          <span
-                            className={`font-bold shrink-0 ${
-                              tx.type === 'income'
-                                ? 'text-gLight-green dark:text-gDark-green'
-                                : 'text-gLight-textPrimary dark:text-gDark-textPrimary'
-                            }`}
+                      {accountTxs.slice(0, 5).map((tx) => {
+                        const isIncoming = tx.type === 'income' || (tx.type === 'transfer' && tx.toAccountId === acc.id);
+                        return (
+                          <div
+                            key={tx.id}
+                            className="py-1.5 px-2 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-between text-xs"
                           >
-                            {tx.type === 'income' ? '+ ৳' : '- ৳'}
-                            {tx.amount}
-                          </span>
-                        </div>
-                      ))}
+                            <span className="truncate pr-2 font-medium">{tx.note}</span>
+                            <span
+                              className={`font-bold shrink-0 ${
+                                isIncoming
+                                  ? 'text-gLight-green dark:text-gDark-green'
+                                  : 'text-gLight-textPrimary dark:text-gDark-textPrimary'
+                              }`}
+                            >
+                              {isIncoming ? '+ ৳' : '- ৳'}
+                              {tx.amount.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

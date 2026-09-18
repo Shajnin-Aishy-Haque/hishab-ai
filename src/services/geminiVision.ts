@@ -1,3 +1,5 @@
+import { getLocalDateString } from '../utils/dateUtils';
+
 export interface ScanReceiptResult {
   shopName: string;
   totalAmount: number;
@@ -65,7 +67,7 @@ export async function scanReceiptWithGemini(
         { name: 'Onion 500g', price: 50 }
       ],
       suggestedCategory: 'bazaar',
-      date: new Date().toISOString().split('T')[0]
+      date: getLocalDateString()
     };
   }
 
