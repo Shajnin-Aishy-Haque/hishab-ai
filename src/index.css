@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .tap-press:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Material You smooth transitions */
+* {
+  -webkit-tap-highlight-color: transparent;
+}

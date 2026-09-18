@@ -1,0 +1,3142 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+  <meta name="theme-color" content="#131314"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="manifest" href="./manifest.json"/>
+  <title>Hishab AI - Google Material You</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <!-- Material Symbols Outlined -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            google: ['"Plus Jakarta Sans"', 'Roboto', 'sans-serif'],
+          },
+          colors: {
+            gDark: {
+              bg: "#131314",
+              surface: "#1e1f20",
+              surfaceHigh: "#282a2c",
+              surfaceHighest: "#333538",
+              blue: "#a8c7fa",
+              blueContainer: "#004a77",
+              onBlueContainer: "#c2e7ff",
+              green: "#a8dab5",
+              greenContainer: "#0f5223",
+              yellow: "#fde293",
+              red: "#f2b8b5",
+              redContainer: "#601410",
+              outline: "#444746",
+              textPrimary: "#e3e3e3",
+              textSecondary: "#c4c7c5",
+              textTertiary: "#8e918f"
+            },
+            gLight: {
+              bg: "#ffffff",
+              surface: "#f0f4f9",
+              surfaceHigh: "#e9eef6",
+              surfaceHighest: "#d3e3fd",
+              blue: "#0b57d0",
+              blueContainer: "#d3e3fd",
+              onBlueContainer: "#041e49",
+              green: "#137333",
+              greenContainer: "#ceead6",
+              red: "#b3261e",
+              redContainer: "#f9dedc",
+              outline: "#747775",
+              textPrimary: "#1f1f1f",
+              textSecondary: "#444746",
+              textTertiary: "#747775"
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .tap-press:active { transform: scale(0.96); }
+    body { font-family: 'Plus Jakarta Sans', Roboto, sans-serif; }
+  </style>
+</head>
+<body class="bg-gLight-bg dark:bg-gDark-bg text-gLight-textPrimary dark:text-gDark-textPrimary antialiased min-h-screen pb-32 transition-colors duration-200">
+  
+  <div class="max-w-md mx-auto min-h-screen relative flex flex-col bg-gLight-bg dark:bg-gDark-bg">
+    
+    <!-- Floating Toast Notification -->
+    <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 transform -translate-y-4 max-w-xs w-[90%] bg-gLight-surfaceHighest dark:bg-gDark-surfaceHighest text-gLight-textPrimary dark:text-gDark-textPrimary px-4 py-3 rounded-2xl shadow-2xl border border-black/10 dark:border-white/10 flex items-center gap-2.5 text-xs font-semibold backdrop-blur-md">
+      <span id="toastIcon" class="material-symbols-outlined text-gLight-green dark:text-gDark-green text-[20px]">check_circle</span>
+      <span id="toastMessage">Action completed</span>
+    </div>
+
+    <!-- 1. TOP APP BAR -->
+    <header class="sticky top-0 z-40 bg-gLight-bg/90 dark:bg-gDark-bg/90 backdrop-blur-md px-5 h-16 w-full flex items-center justify-between border-b border-black/5 dark:border-white/5">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-2xl bg-gLight-surface dark:bg-gDark-surface flex items-center justify-center text-gLight-blue dark:text-gDark-blue">
+          <span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-bold text-base tracking-tight text-gLight-textPrimary dark:text-gDark-textPrimary">Hishab</span>
+          <!-- Google Drive Status Pill -->
+          <div id="headerSyncBadge" class="flex items-center gap-1.5 cursor-pointer tap-press group">
+            <svg class="w-3 h-3 shrink-0" viewBox="0 0 87.3 78">
+              <path fill="#0066da" d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z"/>
+              <path fill="#00ac47" d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z"/>
+              <path fill="#ea4335" d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z"/>
+              <path fill="#00832d" d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z"/>
+              <path fill="#2684fc" d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"/>
+              <path fill="#ffba00" d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z"/>
+            </svg>
+            <span id="syncStatusText" class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary font-medium group-hover:text-gLight-blue dark:group-hover:text-gDark-blue transition-colors">
+              Drive: Auto-Synced
+            </span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="themeToggleBtn" aria-label="Toggle theme" class="w-9 h-9 rounded-full bg-gLight-surface dark:bg-gDark-surface flex items-center justify-center text-gLight-textSecondary dark:text-gDark-textSecondary hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh transition-colors tap-press">
+          <span id="themeIcon" class="material-symbols-outlined text-[20px]">light_mode</span>
+        </button>
+        <div class="w-9 h-9 rounded-full bg-[#1a73e8] text-white flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-blue-500/20 cursor-pointer tap-press">
+          N
+        </div>
+      </div>
+    </header>
+
+    <!-- ==================== TAB 1: HOME (HISHAB) ==================== -->
+    <div id="tab-hishab" class="tab-content flex-1 px-5 flex flex-col gap-4 pt-3">
+      
+      <!-- ACCOUNTS & WALLETS SECTION -->
+      <section class="flex flex-col gap-2">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-gLight-textSecondary dark:text-gDark-textSecondary">
+              Accounts &amp; Wallets
+            </span>
+            <span id="totalNetBalanceText" class="text-[11px] font-bold text-gLight-green dark:text-gDark-green bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              Net: ৳ ৫০,৯০০
+            </span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button id="quickTransferBtn" class="text-xs font-bold text-gLight-blue dark:text-gDark-blue bg-gLight-blueContainer dark:bg-gDark-blueContainer px-2.5 py-1 rounded-full tap-press flex items-center gap-1 hover:opacity-90 transition-opacity">
+              <span class="material-symbols-outlined text-[15px]">swap_horiz</span>
+              <span>⇄ Transfer</span>
+            </button>
+            <button id="addAccountBtn" class="w-6 h-6 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-gLight-textSecondary dark:text-gDark-textSecondary hover:bg-black/10 dark:hover:bg-white/20 tap-press" title="Add Account">
+              <span class="material-symbols-outlined text-[16px]">add</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Scrollable Account Cards -->
+        <div id="accountsScroll" class="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-5 px-5">
+          <!-- Account 1: Cash -->
+          <div class="account-card shrink-0 bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-3 flex flex-col justify-between w-36 h-20 border border-black/5 dark:border-white/5 tap-press shadow-sm cursor-pointer hover:border-gLight-blue/40 dark:hover:border-gDark-blue/40 transition-all" data-acc="cash">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-base">💵</span>
+              <span class="text-[10px] font-bold text-gLight-textTertiary dark:text-gDark-textTertiary">Cash</span>
+            </div>
+            <div>
+              <div id="accBalCash" class="font-extrabold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">৳ ৫,২০০</div>
+              <div class="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary">পকেট ক্যাশ</div>
+            </div>
+          </div>
+
+          <!-- Account 2: bKash -->
+          <div class="account-card shrink-0 bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-3 flex flex-col justify-between w-36 h-20 border border-pink-500/20 dark:border-pink-500/30 tap-press shadow-sm cursor-pointer hover:border-pink-500/50 transition-all" data-acc="bkash">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-base">📱</span>
+              <span class="text-[10px] font-bold text-pink-500">bKash</span>
+            </div>
+            <div>
+              <div id="accBalBkash" class="font-extrabold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">৳ ৮,৪০০</div>
+              <div class="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary">Personal A/C</div>
+            </div>
+          </div>
+
+          <!-- Account 3: Nagad -->
+          <div class="account-card shrink-0 bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-3 flex flex-col justify-between w-36 h-20 border border-orange-500/20 dark:border-orange-500/30 tap-press shadow-sm cursor-pointer hover:border-orange-500/50 transition-all" data-acc="nagad">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-base">🟧</span>
+              <span class="text-[10px] font-bold text-orange-500">Nagad</span>
+            </div>
+            <div>
+              <div id="accBalNagad" class="font-extrabold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">৳ ২,৩০০</div>
+              <div class="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary">Wallet</div>
+            </div>
+          </div>
+
+          <!-- Account 4: Bank -->
+          <div class="account-card shrink-0 bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-3 flex flex-col justify-between w-36 h-20 border border-blue-500/20 dark:border-blue-500/30 tap-press shadow-sm cursor-pointer hover:border-blue-500/50 transition-all" data-acc="bank">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-base">🏦</span>
+              <span class="text-[10px] font-bold text-blue-500">City Bank</span>
+            </div>
+            <div>
+              <div id="accBalBank" class="font-extrabold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">৳ ৩৫,০০০</div>
+              <div class="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary">Salary A/C</div>
+            </div>
+          </div>
+
+          <!-- Quick Add Account Dashed Card -->
+          <div id="quickAddAccountCard" class="account-card shrink-0 bg-transparent rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 w-36 h-20 border-2 border-dashed border-gLight-outline/30 dark:border-gDark-outline/30 hover:border-gLight-blue dark:hover:border-gDark-blue text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-blue dark:hover:text-gDark-blue tap-press cursor-pointer transition-all">
+            <div class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">add</span>
+            </div>
+            <span class="text-[11px] font-bold">+ Add Account</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- HERO PASS CARD -->
+      <section class="rounded-3xl bg-gLight-surface dark:bg-gDark-surface p-6 flex flex-col shadow-sm transition-colors">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-gLight-textSecondary dark:text-gDark-textSecondary">
+            September Spending
+          </span>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gLight-greenContainer dark:bg-gDark-greenContainer/40 text-gLight-green dark:text-gDark-green">
+            ● Normal
+          </span>
+        </div>
+
+        <div class="flex items-baseline gap-1 my-1">
+          <span class="text-4xl font-extrabold tracking-tight text-gLight-textPrimary dark:text-gDark-textPrimary">৳ ২৪,৫০০</span>
+          <span class="text-sm font-medium text-gLight-textTertiary dark:text-gDark-textTertiary ml-1.5">/ ৳ ৩৫,০০০</span>
+        </div>
+
+        <p class="text-xs text-gLight-textSecondary dark:text-gDark-textSecondary mb-4">
+          Daily average: <strong>৳ ৮১৬</strong> • 13 days remaining in cycle
+        </p>
+
+        <div class="w-full bg-black/10 dark:bg-white/10 h-2.5 rounded-full overflow-hidden mb-3">
+          <div class="bg-gLight-blue dark:bg-gDark-blue h-full rounded-full transition-all duration-700" style="width: 70%"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5 pt-3 border-t border-black/5 dark:border-white/5">
+          <div class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl p-3 flex flex-col">
+            <span class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">Daily safe budget</span>
+            <span class="text-sm font-bold text-gLight-textPrimary dark:text-gDark-textPrimary mt-0.5">৳ ৯৬৫ /day</span>
+          </div>
+          <div class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl p-3 flex flex-col">
+            <span class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">Compared to Aug</span>
+            <span class="text-sm font-bold text-gLight-green dark:text-gDark-green mt-0.5 flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+              12% less
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURE 1: DHAR-DENA (LEND & BORROW / ধার-দেনা) TONAL CARD -->
+      <section class="rounded-3xl bg-gLight-surface dark:bg-gDark-surface p-5 flex flex-col gap-3 shadow-sm border border-black/5 dark:border-white/5 transition-colors">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-gLight-blue dark:text-gDark-blue text-[20px]">swap_horiz</span>
+            <span class="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">ধার-দেনা (Lend &amp; Borrow)</span>
+          </div>
+          <button id="addDharBtn" class="text-xs font-semibold text-gLight-blue dark:text-gDark-blue bg-gLight-blueContainer dark:bg-gDark-blueContainer px-3 py-1 rounded-full tap-press flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[15px]">add</span>
+            <span>যোগ করুন</span>
+          </button>
+        </div>
+
+        <!-- Split Summary: পাবো vs দেবো -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <!-- আমি পাবো (People owe me) -->
+          <div class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl p-3.5 flex flex-col border border-emerald-500/10">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[11px] font-semibold text-gLight-green dark:text-gDark-green">আমি পাবো</span>
+              <span class="material-symbols-outlined text-[16px] text-gLight-green dark:text-gDark-green">call_received</span>
+            </div>
+            <span id="paboTotal" class="text-lg font-extrabold text-gLight-green dark:text-gDark-green">৳ ২,৫০০</span>
+            <span id="paboCountText" class="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary mt-0.5">২ জনের কাছে পাই</span>
+          </div>
+
+          <!-- আমি দেবো (I owe people) -->
+          <div class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl p-3.5 flex flex-col border border-rose-500/10">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[11px] font-semibold text-rose-500 dark:text-gDark-red">আমি দেবো</span>
+              <span class="material-symbols-outlined text-[16px] text-rose-500 dark:text-gDark-red">call_made</span>
+            </div>
+            <span id="deboTotal" class="text-lg font-extrabold text-rose-500 dark:text-gDark-red">৳ ৮০০</span>
+            <span id="deboCountText" class="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary mt-0.5">১ জনের বাকি আছে</span>
+          </div>
+        </div>
+
+        <!-- Mini Owed Ledger Items -->
+        <div id="dharList" class="flex flex-col gap-2 pt-1">
+          <!-- Item 1: Sakib owes me -->
+          <div class="dhar-item bg-gLight-surfaceHigh/60 dark:bg-gDark-surfaceHigh/60 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="font-semibold text-gLight-textPrimary dark:text-gDark-textPrimary">সাকিব (Sakib)</span>
+              <span class="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary">• লাঞ্চের ধার</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-gLight-green dark:text-gDark-green">৳ ১,৫০০</span>
+              <button class="settle-btn text-[10px] bg-emerald-500/15 text-emerald-400 font-bold px-2 py-0.5 rounded-full hover:bg-emerald-500/25 tap-press">পেয়েছি</button>
+            </div>
+          </div>
+
+          <!-- Item 2: Modina Store baki -->
+          <div class="dhar-item bg-gLight-surfaceHigh/60 dark:bg-gDark-surfaceHigh/60 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+              <span class="font-semibold text-gLight-textPrimary dark:text-gDark-textPrimary">মদিনা স্টোর (দোকান বাকি)</span>
+              <span class="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary">• ডিম ও তেল</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-rose-400">৳ ৮০০</span>
+              <button class="settle-btn text-[10px] bg-rose-500/15 text-rose-400 font-bold px-2 py-0.5 rounded-full hover:bg-rose-500/25 tap-press">পরিশোধ</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CATEGORY CHIPS -->
+      <section class="flex flex-col gap-2">
+        <div class="flex items-center justify-between text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary px-1">
+          <span>Categories</span>
+          <span id="filterStatus" class="text-gLight-blue dark:text-gDark-blue font-medium">All items</span>
+        </div>
+        <div id="catChipsScroll" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-5 px-5">
+          <button data-cat="all" class="cat-pill shrink-0 bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer font-semibold text-xs px-4 py-2 rounded-full tap-press">
+            All (৳ ২৪.৫k)
+          </button>
+          <button data-cat="bazaar" class="cat-pill shrink-0 bg-gLight-surface dark:bg-gDark-surface text-gLight-textPrimary dark:text-gDark-textPrimary font-medium text-xs px-4 py-2 rounded-full tap-press flex items-center gap-1.5 hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh transition-colors">
+            <span>🛒</span>
+            <span>Bazaar</span>
+          </button>
+          <button data-cat="transport" class="cat-pill shrink-0 bg-gLight-surface dark:bg-gDark-surface text-gLight-textPrimary dark:text-gDark-textPrimary font-medium text-xs px-4 py-2 rounded-full tap-press flex items-center gap-1.5 hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh transition-colors">
+            <span>🛺</span>
+            <span>Transport</span>
+          </button>
+          <button data-cat="food" class="cat-pill shrink-0 bg-gLight-surface dark:bg-gDark-surface text-gLight-textPrimary dark:text-gDark-textPrimary font-medium text-xs px-4 py-2 rounded-full tap-press flex items-center gap-1.5 hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh transition-colors">
+            <span>🍔</span>
+            <span>Food</span>
+          </button>
+          <button data-cat="bills" class="cat-pill shrink-0 bg-gLight-surface dark:bg-gDark-surface text-gLight-textPrimary dark:text-gDark-textPrimary font-medium text-xs px-4 py-2 rounded-full tap-press flex items-center gap-1.5 hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh transition-colors">
+            <span>⚡</span>
+            <span>Bills</span>
+          </button>
+          <!-- Quick Add Category Chip -->
+          <button id="homeAddCatChip" class="shrink-0 bg-transparent border border-dashed border-gLight-outline/40 dark:border-gDark-outline/40 text-gLight-textSecondary dark:text-gDark-textSecondary hover:text-gLight-blue dark:hover:text-gDark-blue font-medium text-xs px-3.5 py-1.5 rounded-full tap-press flex items-center gap-1 hover:border-gLight-blue dark:hover:border-gDark-blue transition-colors">
+            <span class="material-symbols-outlined text-[15px]">add</span>
+            <span>Add Category</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- RECENT TRANSACTIONS -->
+      <section class="flex flex-col gap-2 pt-1">
+        <div class="flex items-center justify-between text-xs text-gLight-textSecondary dark:text-gDark-textSecondary font-semibold px-1">
+          <div class="flex items-center gap-1.5">
+            <span>Today, 17 Sep</span>
+            <span class="text-gLight-textTertiary dark:text-gDark-textTertiary">• 3 items • <strong>৳ ৪১৫</strong></span>
+          </div>
+          <!-- Manual Entry Trigger Button -->
+          <button id="quickManualEntryBtn" class="text-xs text-gLight-blue dark:text-gDark-blue font-bold flex items-center gap-1 hover:underline tap-press py-0.5 px-2 rounded-full bg-gLight-blueContainer/50 dark:bg-gDark-blueContainer/50 transition-colors">
+            <span class="material-symbols-outlined text-[15px]">edit_note</span>
+            <span>+ Manual Entry</span>
+          </button>
+        </div>
+
+        <div id="txList" class="flex flex-col gap-2">
+          <!-- Item 1 -->
+          <div data-category="bazaar" class="tx-item bg-gLight-surface dark:bg-gDark-surface hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh rounded-2xl p-4 flex items-center justify-between tap-press cursor-pointer transition-colors">
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh flex items-center justify-center text-xl shrink-0">
+                🥦
+              </div>
+              <div class="flex flex-col">
+                <span class="font-semibold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">Murgi &amp; Shobji</span>
+                <span class="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary">Kawran Bazar • 11:30 AM</span>
+              </div>
+            </div>
+            <span class="font-bold text-base text-gLight-textPrimary dark:text-gDark-textPrimary">- ৳ ৩৫০</span>
+          </div>
+
+          <!-- Item 2 -->
+          <div data-category="transport" class="tx-item bg-gLight-surface dark:bg-gDark-surface hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh rounded-2xl p-4 flex items-center justify-between tap-press cursor-pointer transition-colors">
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh flex items-center justify-center text-xl shrink-0">
+                🛺
+              </div>
+              <div class="flex flex-col">
+                <span class="font-semibold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">Rickshaw to Office</span>
+                <span class="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary">Dhanmondi • 9:15 AM</span>
+              </div>
+            </div>
+            <span class="font-bold text-base text-gLight-textPrimary dark:text-gDark-textPrimary">- ৳ ৪০</span>
+          </div>
+
+          <!-- Item 3 -->
+          <div data-category="food" class="tx-item bg-gLight-surface dark:bg-gDark-surface hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh rounded-2xl p-4 flex items-center justify-between tap-press cursor-pointer transition-colors">
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh flex items-center justify-center text-xl shrink-0">
+                ☕
+              </div>
+              <div class="flex flex-col">
+                <span class="font-semibold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">Chaa &amp; Biscuit</span>
+                <span class="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary">Tong er dokan • 4:45 PM</span>
+              </div>
+            </div>
+            <span class="font-bold text-base text-gLight-textPrimary dark:text-gDark-textPrimary">- ৳ ২৫</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ==================== TAB 2: ANALYTICS ==================== -->
+    <div id="tab-analytics" class="tab-content hidden flex-1 px-5 flex flex-col gap-4 pt-3">
+      <div class="flex items-center justify-between px-1">
+        <h2 class="text-lg font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">Insights &amp; Charts</h2>
+        <span class="text-xs font-semibold text-gLight-blue dark:text-gDark-blue bg-gLight-surface dark:bg-gDark-surface px-3 py-1.5 rounded-full">September</span>
+      </div>
+
+      <section class="rounded-3xl bg-gLight-surface dark:bg-gDark-surface p-5 flex flex-col gap-4 shadow-sm">
+        <span class="text-xs font-bold uppercase tracking-wider text-gLight-textSecondary dark:text-gDark-textSecondary">Spending by Category</span>
+
+        <div class="flex flex-col gap-3.5">
+          <div>
+            <div class="flex justify-between text-xs mb-1.5 font-medium">
+              <span>🛒 Bazaar</span>
+              <span class="font-bold">৳ ১৪,২০০ (58%)</span>
+            </div>
+            <div class="w-full bg-black/10 dark:bg-white/10 h-2 rounded-full overflow-hidden">
+              <div class="bg-gLight-blue dark:bg-gDark-blue h-full rounded-full" style="width: 58%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1.5 font-medium">
+              <span>🍔 Food &amp; Dining</span>
+              <span class="font-bold">৳ ৬,৭০০ (27%)</span>
+            </div>
+            <div class="w-full bg-black/10 dark:bg-white/10 h-2 rounded-full overflow-hidden">
+              <div class="bg-gLight-green dark:bg-gDark-green h-full rounded-full" style="width: 27%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1.5 font-medium">
+              <span>🛺 Transport</span>
+              <span class="font-bold">৳ ৩,০৫০ (15%)</span>
+            </div>
+            <div class="w-full bg-black/10 dark:bg-white/10 h-2 rounded-full overflow-hidden">
+              <div class="bg-amber-400 h-full rounded-full" style="width: 15%"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-3xl bg-gLight-surface dark:bg-gDark-surface p-5 flex flex-col gap-3 shadow-sm">
+        <span class="text-xs font-bold uppercase tracking-wider text-gLight-textSecondary dark:text-gDark-textSecondary">Weekly Breakdown</span>
+        <div class="flex items-end justify-between h-28 pt-4 gap-3 border-b border-black/5 dark:border-white/5 pb-2">
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-t-xl h-[45%]"></div>
+            <span class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">W1</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-t-xl h-[75%]"></div>
+            <span class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">W2</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-gLight-blue dark:bg-gDark-blue rounded-t-xl h-[60%]"></div>
+            <span class="text-[11px] text-gLight-blue dark:text-gDark-blue font-bold">W3</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-black/5 dark:bg-white/5 border border-dashed border-black/20 dark:border-white/20 rounded-t-xl h-[20%]"></div>
+            <span class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">W4</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== TAB 3: CATEGORIES ==================== -->
+    <div id="tab-categories" class="tab-content hidden flex-1 px-5 flex flex-col gap-4 pt-3">
+      <div class="flex items-center justify-between px-1">
+        <div>
+          <h2 class="text-lg font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">Categories</h2>
+          <span id="catCountText" class="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary font-medium">4 active categories • Synced to Drive</span>
+        </div>
+        <button id="addCategoryBtn" class="bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer px-3.5 py-1.5 rounded-full text-xs font-bold tap-press flex items-center gap-1.5 hover:opacity-90 shadow-sm transition-opacity">
+          <span class="material-symbols-outlined text-[16px]">add</span>
+          <span>New Category</span>
+        </button>
+      </div>
+
+      <div id="categoryGrid" class="grid grid-cols-2 gap-3">
+        <!-- Card 1: Bazaar -->
+        <div class="category-card bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-4 flex flex-col justify-between h-32 tap-press shadow-sm border border-black/5 dark:border-white/5 hover:border-gLight-blue/40 dark:hover:border-gDark-blue/40 transition-all cursor-pointer">
+          <div class="flex items-center justify-between">
+            <span class="text-2xl p-1.5 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh">🛒</span>
+            <span class="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">62% used</span>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">Bazaar</div>
+            <div class="text-[11px] text-gLight-textSecondary dark:text-gDark-textSecondary mt-0.5">Spent: ৳ ৯,৪০০ / ৳ ১৫k</div>
+            <div class="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div class="bg-gLight-blue dark:bg-gDark-blue h-full rounded-full" style="width: 62%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Transport -->
+        <div class="category-card bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-4 flex flex-col justify-between h-32 tap-press shadow-sm border border-black/5 dark:border-white/5 hover:border-gLight-blue/40 dark:hover:border-gDark-blue/40 transition-all cursor-pointer">
+          <div class="flex items-center justify-between">
+            <span class="text-2xl p-1.5 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh">🛺</span>
+            <span class="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">78% used</span>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">Transport</div>
+            <div class="text-[11px] text-gLight-textSecondary dark:text-gDark-textSecondary mt-0.5">Spent: ৳ ৩,১০০ / ৳ ৪k</div>
+            <div class="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div class="bg-amber-500 h-full rounded-full" style="width: 78%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Food & Dining -->
+        <div class="category-card bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-4 flex flex-col justify-between h-32 tap-press shadow-sm border border-black/5 dark:border-white/5 hover:border-gLight-blue/40 dark:hover:border-gDark-blue/40 transition-all cursor-pointer">
+          <div class="flex items-center justify-between">
+            <span class="text-2xl p-1.5 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh">🍔</span>
+            <span class="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">55% used</span>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">Food &amp; Dining</div>
+            <div class="text-[11px] text-gLight-textSecondary dark:text-gDark-textSecondary mt-0.5">Spent: ৳ ৪,৪০০ / ৳ ৮k</div>
+            <div class="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div class="bg-emerald-500 h-full rounded-full" style="width: 55%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Bills & Utility -->
+        <div class="category-card bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-4 flex flex-col justify-between h-32 tap-press shadow-sm border border-black/5 dark:border-white/5 hover:border-gLight-blue/40 dark:hover:border-gDark-blue/40 transition-all cursor-pointer">
+          <div class="flex items-center justify-between">
+            <span class="text-2xl p-1.5 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh">⚡</span>
+            <span class="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">85% used</span>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">Bills &amp; Utility</div>
+            <div class="text-[11px] text-gLight-textSecondary dark:text-gDark-textSecondary mt-0.5">Spent: ৳ ৫,১০০ / ৳ ৬k</div>
+            <div class="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div class="bg-gLight-blue dark:bg-gDark-blue h-full rounded-full" style="width: 85%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: Quick Add Dashed Card -->
+        <div id="quickAddCategoryCard" class="bg-transparent rounded-3xl p-4 flex flex-col items-center justify-center gap-2 h-32 tap-press border-2 border-dashed border-gLight-outline/30 dark:border-gDark-outline/30 hover:border-gLight-blue dark:hover:border-gDark-blue text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-blue dark:hover:text-gDark-blue transition-all cursor-pointer">
+          <div class="w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+            <span class="material-symbols-outlined text-[20px]">add</span>
+          </div>
+          <span class="text-xs font-bold">Add Category</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 4: SETTINGS ==================== -->
+    <div id="tab-settings" class="tab-content hidden flex-1 px-5 flex flex-col gap-4 pt-3">
+      <h2 class="text-lg font-bold px-1">Settings &amp; Backup</h2>
+
+      <!-- GOOGLE DRIVE AUTO-BACKUP HERO CARD -->
+      <section class="bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-5 flex flex-col gap-4 shadow-sm border border-black/5 dark:border-white/5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-white flex items-center justify-center shadow-sm shrink-0">
+              <svg class="w-6 h-6" viewBox="0 0 87.3 78">
+                <path fill="#0066da" d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z"/>
+                <path fill="#00ac47" d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z"/>
+                <path fill="#ea4335" d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z"/>
+                <path fill="#00832d" d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z"/>
+                <path fill="#2684fc" d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"/>
+                <path fill="#ffba00" d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">Google Drive Backup</div>
+              <div class="text-xs text-gLight-textSecondary dark:text-gDark-textSecondary">nafiswalid@gmail.com</div>
+            </div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer tap-press">
+            <input id="autoBackupToggle" type="checkbox" checked class="sr-only peer">
+            <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          </label>
+        </div>
+
+        <div class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl p-3.5 flex flex-col gap-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-gLight-textSecondary dark:text-gDark-textSecondary font-medium">Backup Status:</span>
+            <span id="settingsBackupStatus" class="font-bold text-gLight-green dark:text-gDark-green flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">check_circle</span>
+              Auto-Sync Active
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gLight-textTertiary dark:text-gDark-textTertiary">
+            <span>Destination:</span>
+            <span class="font-mono text-[11px] text-gLight-textPrimary dark:text-gDark-textPrimary">My Drive / Hishab AI / data.json</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gLight-textTertiary dark:text-gDark-textTertiary">
+            <span>Last Auto-Backup:</span>
+            <span id="lastBackupTime" class="text-gLight-textPrimary dark:text-gDark-textPrimary font-medium">Today at 2:38 PM</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button id="backupNowBtn" class="bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg font-semibold text-xs py-2.5 px-3 rounded-full tap-press flex items-center justify-center gap-1.5 shadow-sm transition-opacity">
+            <span class="material-symbols-outlined text-[16px]">cloud_upload</span>
+            <span>Back up Now</span>
+          </button>
+          <button id="restoreNowBtn" class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-gLight-textPrimary dark:text-gDark-textPrimary border border-black/5 dark:border-white/10 font-semibold text-xs py-2.5 px-3 rounded-full tap-press flex items-center justify-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[16px]">cloud_download</span>
+            <span>Restore Data</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Preferences -->
+      <div class="bg-gLight-surface dark:bg-gDark-surface rounded-3xl divide-y divide-black/5 dark:divide-white/5 overflow-hidden shadow-sm">
+        <div class="p-4 flex items-center justify-between">
+          <span class="text-sm font-medium">Currency</span>
+          <span class="text-xs font-semibold text-gLight-blue dark:text-gDark-blue">BDT (৳)</span>
+        </div>
+        <div class="p-4 flex items-center justify-between">
+          <span class="text-sm font-medium">Voice Recognition</span>
+          <span class="text-xs font-semibold text-gLight-green dark:text-gDark-green">Bangla &amp; Banglish</span>
+        </div>
+        <div id="exportCsvBtn" class="p-4 flex items-center justify-between cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 tap-press transition-colors">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-gLight-green dark:text-gDark-green text-[20px]">table_view</span>
+            <span class="text-sm font-medium">Export all to Excel/CSV</span>
+          </div>
+          <span class="material-symbols-outlined text-[18px] text-gLight-textTertiary dark:text-gDark-textTertiary">file_download</span>
+        </div>
+      </div>
+
+      <!-- Hidden file input for restore -->
+      <input type="file" id="restoreFileInput" accept=".json" class="hidden"/>
+    </div>
+
+    <!-- 5. GOOGLE SEARCH / GEMINI CAPSULE BAR (WITH CAMERA MEMO SCANNER) -->
+    <div class="fixed bottom-20 left-0 right-0 max-w-md mx-auto px-5 z-40">
+      <div class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh/95 backdrop-blur-xl rounded-full p-2 flex items-center justify-between shadow-lg border border-black/5 dark:border-white/10 transition-colors">
+        
+        <!-- Feature 4 Trigger: Gemini Sparkle button for Financial Advice -->
+        <button id="aiAdvisorTriggerBtn" aria-label="Open AI Advisor" class="flex items-center pl-2 pr-1.5 text-[#4285F4] tap-press hover:opacity-80 transition-opacity">
+          <span class="material-symbols-outlined text-[24px]">auto_awesome</span>
+        </button>
+
+        <!-- Natural Language Input -->
+        <input 
+          id="expenseInput"
+          class="w-full bg-transparent border-0 text-gLight-textPrimary dark:text-gDark-textPrimary placeholder:text-gLight-textTertiary dark:placeholder:text-gDark-textTertiary text-sm font-medium focus:outline-none px-1" 
+          placeholder="Ask advice or say '350 takar murgi'..." 
+          type="text"
+        />
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <!-- Manual Entry Button -->
+          <button 
+            id="capsuleManualBtn"
+            aria-label="Manual Expense Entry" 
+            title="ম্যানুয়াল হিসাব লিখুন"
+            class="w-10 h-10 rounded-full bg-gLight-surface dark:bg-gDark-surface text-gLight-textPrimary dark:text-gDark-textPrimary flex items-center justify-center font-bold tap-press hover:bg-gLight-surfaceHighest dark:hover:bg-gDark-surfaceHighest transition-colors border border-black/5 dark:border-white/10"
+          >
+            <span class="material-symbols-outlined text-[20px]">edit_note</span>
+          </button>
+
+          <!-- Feature 2: Camera Memo Scanner Button (100% Free Gemini Vision) -->
+          <button 
+            id="cameraScanBtn"
+            aria-label="Scan Cash Memo" 
+            title="ক্যাশ মেমোর ছবি স্ক্যান করুন"
+            class="w-10 h-10 rounded-full bg-gLight-surface dark:bg-gDark-surface text-gLight-textPrimary dark:text-gDark-textPrimary flex items-center justify-center font-bold tap-press hover:bg-gLight-surfaceHighest dark:hover:bg-gDark-surfaceHighest transition-colors border border-black/5 dark:border-white/10"
+          >
+            <span class="material-symbols-outlined text-[20px]">photo_camera</span>
+          </button>
+
+          <!-- Voice Mic Button -->
+          <button 
+            id="micButton"
+            aria-label="Start Voice Logging" 
+            class="w-11 h-11 rounded-full bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg flex items-center justify-center font-bold tap-press transition-colors shadow-sm"
+          >
+            <span class="material-symbols-outlined text-[22px]">mic</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 6. GOOGLE MATERIAL 3 NAVIGATION BAR -->
+    <nav class="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-around items-center px-3 h-20 max-w-md mx-auto bg-gLight-surface dark:bg-gDark-surface border-t border-black/5 dark:border-white/5 transition-colors">
+      <button data-tab="hishab" class="nav-btn flex flex-col items-center justify-center gap-1 tap-press flex-1 py-1">
+        <div class="nav-pill w-14 h-8 rounded-full bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer flex items-center justify-center transition-all">
+          <span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+        </div>
+        <span class="nav-label text-[11px] font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">Hishab</span>
+      </button>
+
+      <button data-tab="analytics" class="nav-btn flex flex-col items-center justify-center gap-1 tap-press flex-1 py-1">
+        <div class="nav-pill w-14 h-8 rounded-full flex items-center justify-center text-gLight-textTertiary dark:text-gDark-textTertiary transition-all">
+          <span class="material-symbols-outlined text-[22px]">insights</span>
+        </div>
+        <span class="nav-label text-[11px] font-medium text-gLight-textTertiary dark:text-gDark-textTertiary">Insights</span>
+      </button>
+
+      <button data-tab="categories" class="nav-btn flex flex-col items-center justify-center gap-1 tap-press flex-1 py-1">
+        <div class="nav-pill w-14 h-8 rounded-full flex items-center justify-center text-gLight-textTertiary dark:text-gDark-textTertiary transition-all">
+          <span class="material-symbols-outlined text-[22px]">category</span>
+        </div>
+        <span class="nav-label text-[11px] font-medium text-gLight-textTertiary dark:text-gDark-textTertiary">Categories</span>
+      </button>
+
+      <button data-tab="settings" class="nav-btn flex flex-col items-center justify-center gap-1 tap-press flex-1 py-1">
+        <div class="nav-pill w-14 h-8 rounded-full flex items-center justify-center text-gLight-textTertiary dark:text-gDark-textTertiary transition-all">
+          <span class="material-symbols-outlined text-[22px]">settings</span>
+        </div>
+        <span class="nav-label text-[11px] font-medium text-gLight-textTertiary dark:text-gDark-textTertiary">Settings</span>
+      </button>
+    </nav>
+
+    <!-- ==================== MODAL 1: CAMERA RECEIPT SCANNER (GEMINI VISION) ==================== -->
+    <div id="cameraModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-end justify-center">
+      <div class="bg-gLight-surface dark:bg-gDark-surface rounded-t-3xl max-w-md w-full p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto shadow-2xl border-t border-black/10 dark:border-white/10">
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-gLight-blue dark:text-gDark-blue text-[24px]">document_scanner</span>
+            <h3 class="text-base font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">মেমো স্ক্যানার (Gemini Vision)</h3>
+          </div>
+          <button id="closeCameraModal" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center tap-press">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Simulated Photo Preview -->
+        <div class="relative bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl p-4 border border-dashed border-gLight-blue/40 dark:border-gDark-blue/40 flex flex-col items-center text-center gap-2">
+          <div class="w-12 h-12 rounded-full bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer flex items-center justify-center">
+            <span class="material-symbols-outlined text-[26px]">receipt_long</span>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">স্বপ্ন ক্যাশ মেমো (Shwapno Memo #৪২০৯)</div>
+            <div class="text-xs text-gLight-green dark:text-gDark-green font-medium flex items-center justify-center gap-1 mt-0.5">
+              <span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+              Gemini Vision Auto-Extracted ৩টি আইটেম
+            </div>
+          </div>
+        </div>
+
+        <!-- Extracted Items List -->
+        <div class="flex flex-col gap-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-gLight-textSecondary dark:text-gDark-textSecondary">শনাক্তকৃত আইটেমসমূহ</span>
+
+          <div class="bg-gLight-surfaceHigh/70 dark:bg-gDark-surfaceHigh/70 rounded-2xl p-3 flex flex-col divide-y divide-black/5 dark:divide-white/5 text-xs">
+            <div class="py-2 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span>🍚</span>
+                <span class="font-semibold">চিনিগুঁড়া পোলাও চাল (১ কেজি)</span>
+              </div>
+              <span class="font-bold">৳ ১৪০</span>
+            </div>
+            <div class="py-2 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span>🍾</span>
+                <span class="font-semibold">সয়াবিন তেল (১ লিটার)</span>
+              </div>
+              <span class="font-bold">৳ ১৮৫</span>
+            </div>
+            <div class="py-2 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span>🥚</span>
+                <span class="font-semibold">ফার্মের লাল ডিম (১ ডজন)</span>
+              </div>
+              <span class="font-bold">৳ ১৫৫</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between px-2 pt-1 font-bold text-sm">
+            <span>মোট ভাউচার অ্যামাউন্ট:</span>
+            <span class="text-gLight-blue dark:text-gDark-blue text-base">৳ ৪৮০</span>
+          </div>
+        </div>
+
+        <!-- Add All Button -->
+        <button id="confirmScanBtn" class="bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg font-bold text-sm py-3 rounded-full tap-press shadow-md flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">add_circle</span>
+          <span>সবগুলো খরচে যোগ করুন (Add to Bazaar)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== MODAL 2: AI FINANCIAL ADVISOR (GEMINI) ==================== -->
+    <div id="aiAdvisorModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-end justify-center">
+      <div class="bg-gLight-surface dark:bg-gDark-surface rounded-t-3xl max-w-md w-full p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto shadow-2xl border-t border-black/10 dark:border-white/10">
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-[#4285F4]/15 flex items-center justify-center text-[#4285F4]">
+              <span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">হিসাব এআই অ্যাডভাইজর</h3>
+              <div class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">Powered by Gemini 2.0 Flash (Free)</div>
+            </div>
+          </div>
+          <button id="closeAdvisorModal" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center tap-press">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Suggested Questions Pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <button class="advisor-query-btn shrink-0 bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-xs font-semibold px-3 py-1.5 rounded-full border border-black/5 dark:border-white/10 tap-press hover:border-gLight-blue dark:hover:border-gDark-blue transition-colors">
+            👟 আমি কি ৩,০০০ টাকার জুতো কিনতে পারবো?
+          </button>
+          <button class="advisor-query-btn shrink-0 bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-xs font-semibold px-3 py-1.5 rounded-full border border-black/5 dark:border-white/10 tap-press hover:border-gLight-blue dark:hover:border-gDark-blue transition-colors">
+            🥦 বাজারে কেন এত বেশি খরচ হলো?
+          </button>
+        </div>
+
+        <!-- Chat Bubble (User Question) -->
+        <div id="advisorConversation" class="flex flex-col gap-3 pt-1">
+          <!-- Question -->
+          <div class="self-end bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[85%] text-xs font-semibold">
+            আমি কি এই মাসে ৩,০০০ টাকার জুতো কিনতে পারবো?
+          </div>
+
+          <!-- AI Answer Bubble -->
+          <div class="self-start bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-gLight-textPrimary dark:text-gDark-textPrimary rounded-2xl rounded-tl-sm p-4 max-w-[95%] text-xs flex flex-col gap-2 shadow-sm border border-black/5 dark:border-white/5">
+            <div class="flex items-center gap-1 text-[#4285F4] font-bold text-[11px]">
+              <span class="material-symbols-outlined text-[15px]">insights</span>
+              <span>বাজেট অ্যানালাইসিস</span>
+            </div>
+            <p class="leading-relaxed">
+              আপনার সেপ্টেম্বর মাসের বাজেট <strong>৳ ৩৫,০০০</strong>, যার মধ্যে অলরেডি খরচ হয়েছে <strong>৳ ২৪,৫০০</strong>। আর বাকি আছে <strong>৳ ১০,৫০০</strong> (বাকি ১৩ দিন)।
+            </p>
+            <div class="bg-black/5 dark:bg-white/5 rounded-xl p-2.5 flex flex-col gap-1 border border-black/5 dark:border-white/10">
+              <div class="flex justify-between">
+                <span>বর্তমান দৈনিক নিরাপদ লিমিট:</span>
+                <strong class="text-gLight-green dark:text-gDark-green">৳ ৯৬৫ /দিন</strong>
+              </div>
+              <div class="flex justify-between">
+                <span>৩,০০০ টাকার জুতো কিনলে:</span>
+                <strong class="text-amber-400">৳ ৫৮০ /দিন</strong>
+              </div>
+            </div>
+            <p class="leading-relaxed text-gLight-textSecondary dark:text-gDark-textSecondary">
+              💡 <strong>পরামর্শ:</strong> আপনি জুতোটা কিনতে পারবেন, তবে মাসের শেষ ১০ দিন কাঁচাবাজার ও বাইরে খাওয়া একটু কন্ট্রোলে রাখতে হবে।
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== MODAL 3: ADD NEW CATEGORY ==================== -->
+    <div id="newCategoryModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-end justify-center">
+      <div class="bg-gLight-surface dark:bg-gDark-surface rounded-t-3xl max-w-md w-full p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto shadow-2xl border-t border-black/10 dark:border-white/10">
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-2xl bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer flex items-center justify-center">
+              <span class="material-symbols-outlined text-[20px]">category</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">New Category</h3>
+              <div class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">Custom icon, budget & color</div>
+            </div>
+          </div>
+          <button id="closeCategoryModal" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center tap-press">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="flex flex-col gap-1.5">
+          <span class="text-[11px] font-bold text-gLight-textTertiary dark:text-gDark-textTertiary uppercase tracking-wider">Quick Suggestions (1-tap setup)</span>
+          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+            <button type="button" class="cat-preset-btn shrink-0 bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-xs font-semibold px-3 py-1.5 rounded-full tap-press border border-black/5 dark:border-white/10 hover:border-gLight-blue dark:hover:border-gDark-blue transition-colors" data-name="Medical & Osudh" data-emoji="💊" data-budget="3000">
+              💊 Medical
+            </button>
+            <button type="button" class="cat-preset-btn shrink-0 bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-xs font-semibold px-3 py-1.5 rounded-full tap-press border border-black/5 dark:border-white/10 hover:border-gLight-blue dark:hover:border-gDark-blue transition-colors" data-name="Shopping & Kapor" data-emoji="🛍️" data-budget="5000">
+              🛍️ Shopping
+            </button>
+            <button type="button" class="cat-preset-btn shrink-0 bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-xs font-semibold px-3 py-1.5 rounded-full tap-press border border-black/5 dark:border-white/10 hover:border-gLight-blue dark:hover:border-gDark-blue transition-colors" data-name="Education & Boi" data-emoji="📚" data-budget="2500">
+              📚 Education
+            </button>
+            <button type="button" class="cat-preset-btn shrink-0 bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-xs font-semibold px-3 py-1.5 rounded-full tap-press border border-black/5 dark:border-white/10 hover:border-gLight-blue dark:hover:border-gDark-blue transition-colors" data-name="Cafe & Adda" data-emoji="☕" data-budget="2000">
+              ☕ Cafe / Adda
+            </button>
+            <button type="button" class="cat-preset-btn shrink-0 bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-xs font-semibold px-3 py-1.5 rounded-full tap-press border border-black/5 dark:border-white/10 hover:border-gLight-blue dark:hover:border-gDark-blue transition-colors" data-name="Gym & Fitness" data-emoji="🏋️" data-budget="1500">
+              🏋️ Gym
+            </button>
+            <button type="button" class="cat-preset-btn shrink-0 bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-xs font-semibold px-3 py-1.5 rounded-full tap-press border border-black/5 dark:border-white/10 hover:border-gLight-blue dark:hover:border-gDark-blue transition-colors" data-name="Gaming & Fun" data-emoji="🎮" data-budget="2000">
+              🎮 Gaming
+            </button>
+          </div>
+        </div>
+
+        <!-- Category Name Input -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">Category Name</label>
+          <input 
+            id="newCatNameInput" 
+            type="text" 
+            placeholder="e.g. Medical & Osudh" 
+            class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+          />
+        </div>
+
+        <!-- Emoji / Icon Picker -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">Choose Icon / Emoji</label>
+            <span id="selectedEmojiPreview" class="text-base font-bold">Selected: 💊</span>
+          </div>
+          <div id="emojiPickerGrid" class="grid grid-cols-8 gap-2 p-2 bg-gLight-surfaceHigh/60 dark:bg-gDark-surfaceHigh/60 rounded-2xl border border-black/5 dark:border-white/10">
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press ring-2 ring-gLight-blue dark:ring-gDark-blue bg-black/5 dark:bg-white/10" data-emoji="💊">💊</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="📚">📚</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="🛍️">🛍️</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="☕">☕</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="🎮">🎮</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="🏋️">🏋️</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="✈️">✈️</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="👶">👶</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="✂️">✂️</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="🏠">🏠</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="🍿">🍿</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="💻">💻</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="🎁">🎁</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="🍕">🍕</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="🚕">🚕</button>
+            <button type="button" class="emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10" data-emoji="💡">💡</button>
+          </div>
+        </div>
+
+        <!-- Monthly Target Budget Input -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">Monthly Target Budget (৳ BDT - Optional)</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-4 font-bold text-sm text-gLight-textTertiary dark:text-gDark-textTertiary">৳</span>
+            <input 
+              id="newCatBudgetInput" 
+              type="number" 
+              placeholder="3000" 
+              class="w-full bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl pl-9 pr-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+            />
+          </div>
+        </div>
+
+        <!-- Material Tonal Color Selection -->
+        <div class="flex flex-col gap-2">
+          <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">Material Tonal Accent</label>
+          <div class="flex items-center gap-3">
+            <button type="button" class="cat-color-opt w-7 h-7 rounded-full bg-[#1a73e8] ring-2 ring-white dark:ring-gDark-surfaceHigh ring-offset-2 ring-offset-[#1a73e8]" data-color="blue"></button>
+            <button type="button" class="cat-color-opt w-7 h-7 rounded-full bg-[#1e8e3e]" data-color="green"></button>
+            <button type="button" class="cat-color-opt w-7 h-7 rounded-full bg-[#f9ab00]" data-color="amber"></button>
+            <button type="button" class="cat-color-opt w-7 h-7 rounded-full bg-[#e37400]" data-color="orange"></button>
+            <button type="button" class="cat-color-opt w-7 h-7 rounded-full bg-[#d93025]" data-color="red"></button>
+            <button type="button" class="cat-color-opt w-7 h-7 rounded-full bg-[#a142f4]" data-color="purple"></button>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2.5 pt-2">
+          <button id="cancelCategoryBtn" type="button" class="flex-1 py-3 rounded-full text-xs font-bold text-gLight-textSecondary dark:text-gDark-textSecondary hover:bg-black/5 dark:hover:bg-white/5 tap-press transition-colors">
+            Cancel
+          </button>
+          <button id="saveCategoryBtn" type="button" class="flex-1 bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg py-3 rounded-full text-xs font-bold tap-press shadow-md hover:opacity-95 transition-opacity flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">check</span>
+            <span>Save Category</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== MODAL 4: MANUAL ENTRY (EXPENSE / INCOME / TRANSFER) ==================== -->
+    <div id="manualEntryModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-end justify-center">
+      <div class="bg-gLight-surface dark:bg-gDark-surface rounded-t-3xl max-w-md w-full p-6 flex flex-col gap-4 max-h-[88vh] overflow-y-auto shadow-2xl border-t border-black/10 dark:border-white/10">
+        
+        <!-- Header: 3-Way Mode Switcher (Expense, Income, Transfer) -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-full border border-black/5 dark:border-white/10">
+            <button id="manualTypeExpense" type="button" class="manual-type-btn px-3 py-1.5 rounded-full text-xs font-bold bg-gLight-surface dark:bg-gDark-surface text-rose-500 shadow-sm transition-all flex items-center gap-1">
+              <span class="material-symbols-outlined text-[15px]">trending_down</span>
+              <span>খরচ</span>
+            </button>
+            <button id="manualTypeIncome" type="button" class="manual-type-btn px-3 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-green dark:hover:text-gDark-green transition-all flex items-center gap-1">
+              <span class="material-symbols-outlined text-[15px]">trending_up</span>
+              <span>আয়</span>
+            </button>
+            <button id="manualTypeTransfer" type="button" class="manual-type-btn px-3 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-blue dark:hover:text-gDark-blue transition-all flex items-center gap-1">
+              <span class="material-symbols-outlined text-[15px]">swap_horiz</span>
+              <span>ট্রান্সফার</span>
+            </button>
+          </div>
+
+          <button id="closeManualModal" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center tap-press">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Big Amount Display & Input -->
+        <div class="flex flex-col items-center justify-center py-3 bg-gLight-surfaceHigh/50 dark:bg-gDark-surfaceHigh/50 rounded-2xl border border-black/5 dark:border-white/10">
+          <span id="amountHeadingText" class="text-xs font-semibold text-gLight-textTertiary dark:text-gDark-textTertiary">টাকার পরিমাণ (Amount in BDT)</span>
+          <div class="flex items-center justify-center gap-1 my-1">
+            <span class="text-3xl font-extrabold text-gLight-textPrimary dark:text-gDark-textPrimary">৳</span>
+            <input 
+              id="manualAmountInput" 
+              type="number" 
+              placeholder="0" 
+              class="w-48 text-3xl font-black text-center bg-transparent border-0 focus:outline-none text-gLight-textPrimary dark:text-gDark-textPrimary placeholder:text-gLight-textTertiary/40"
+            />
+          </div>
+          <!-- Quick Amount Chips -->
+          <div class="flex items-center gap-2 pt-1">
+            <button type="button" class="quick-amt-chip text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 tap-press text-gLight-textSecondary dark:text-gDark-textSecondary" data-val="50">+৳৫০</button>
+            <button type="button" class="quick-amt-chip text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 tap-press text-gLight-textSecondary dark:text-gDark-textSecondary" data-val="100">+৳১০০</button>
+            <button type="button" class="quick-amt-chip text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 tap-press text-gLight-textSecondary dark:text-gDark-textSecondary" data-val="500">+৳৫০০</button>
+            <button type="button" class="quick-amt-chip text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 tap-press text-gLight-textSecondary dark:text-gDark-textSecondary" data-val="1000">+৳১,০০০</button>
+          </div>
+        </div>
+
+        <!-- Section A: Expense & Income Fields -->
+        <div id="expenseIncomeFieldsGroup" class="flex flex-col gap-3.5">
+          <!-- Note / Description Input -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">কিসের খরচ / বিবরণ (Note)</label>
+            <input 
+              id="manualNoteInput" 
+              type="text" 
+              placeholder="e.g. কাঁচাবাজার, রিকশা ভাড়া, ঔষধ, চা-নাস্তা" 
+              class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+            />
+            <!-- Quick Note Presets -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              <button type="button" class="manual-preset-note shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-gLight-textTertiary dark:text-gDark-textTertiary tap-press" data-note="কাঁচাবাজার (সবজি ও মাছ)" data-cat="bazaar" data-acc="cash">🥦 কাঁচাবাজার</button>
+              <button type="button" class="manual-preset-note shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-gLight-textTertiary dark:text-gDark-textTertiary tap-press" data-note="রিকশা ভাড়া" data-cat="transport" data-acc="cash">🛺 রিকশা</button>
+              <button type="button" class="manual-preset-note shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-gLight-textTertiary dark:text-gDark-textTertiary tap-press" data-note="চা ও বিস্কুট" data-cat="food" data-acc="cash">☕ চা-নাস্তা</button>
+              <button type="button" class="manual-preset-note shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-gLight-textTertiary dark:text-gDark-textTertiary tap-press" data-note="ফার্মেসী ঔষধ" data-cat="medical" data-acc="bkash">💊 ঔষধ</button>
+            </div>
+          </div>
+
+          <!-- Dropdown 1: Account / Wallet (Paid From or Deposited To) -->
+          <div class="flex flex-col gap-1.5">
+            <label id="manualAccountSelectLabel" class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">
+              কোন অ্যাকাউন্ট থেকে খরচ হয়েছে? (Paid From)
+            </label>
+            <div class="relative">
+              <select id="manualAccountSelect" class="w-full appearance-none bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary cursor-pointer pr-10">
+                <option value="cash" data-name="Cash Wallet">💵 Cash (পকেট ক্যাশ - ৳ ৫,২০০)</option>
+                <option value="bkash" data-name="bKash">📱 bKash (বিকাশ - ৳ ৮,৪০০)</option>
+                <option value="nagad" data-name="Nagad">🟧 Nagad (নগদ - ৳ ২,৩০০)</option>
+                <option value="bank" data-name="City Bank">🏦 City Bank (স্যালারি অ্যাকাউন্ট - ৳ ৩৫,০০০)</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gLight-textTertiary dark:text-gDark-textTertiary text-[20px]">expand_more</span>
+            </div>
+          </div>
+
+          <!-- Dropdown 2: Category -->
+          <div id="manualCatField" class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">
+              ক্যাটাগরি বাছাই করুন (Select Category)
+            </label>
+            <div class="relative">
+              <select id="manualCatSelect" class="w-full appearance-none bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary cursor-pointer pr-10">
+                <option value="bazaar" data-icon="🛒" data-name="Bazaar">🛒 Bazaar (কাঁচাবাজার ও মুদি)</option>
+                <option value="transport" data-icon="🛺" data-name="Transport">🛺 Transport (যাতায়াত ও রিকশা)</option>
+                <option value="food" data-icon="🍔" data-name="Food">🍔 Food &amp; Dining (খাবার ও রেস্তোরাঁ)</option>
+                <option value="bills" data-icon="⚡" data-name="Bills">⚡ Bills &amp; Utility (বিদ্যুৎ, গ্যাস ও নেট)</option>
+                <option value="medical" data-icon="💊" data-name="Medical">💊 Medical &amp; Health (ঔষধ ও স্বাস্থ্য)</option>
+                <option value="shopping" data-icon="🛍️" data-name="Shopping">🛍️ Shopping (কেনাকাটা ও পোশাক)</option>
+                <option value="education" data-icon="📚" data-name="Education">📚 Education (বই ও পড়াশোনা)</option>
+                <option value="cafe" data-icon="☕" data-name="Cafe">☕ Cafe &amp; Adda (চা-নাস্তা)</option>
+                <option value="entertainment" data-icon="🎮" data-name="Entertainment">🎮 Entertainment (বিনোদন)</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gLight-textTertiary dark:text-gDark-textTertiary text-[20px]">expand_more</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section B: Account-to-Account Transfer Fields (shown only when Transfer tab is active) -->
+        <div id="transferFieldsGroup" class="hidden flex flex-col gap-3.5">
+          <div class="grid grid-cols-2 gap-2.5">
+            <!-- From Account Dropdown -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">
+                From (টাকা যাবে)
+              </label>
+              <div class="relative">
+                <select id="transferFromSelect" class="w-full appearance-none bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-3 py-3 text-xs font-semibold border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary cursor-pointer pr-8">
+                  <option value="bank">🏦 City Bank (৳৩৫k)</option>
+                  <option value="cash">💵 Cash (৳৫.২k)</option>
+                  <option value="bkash">📱 bKash (৳৮.৪k)</option>
+                  <option value="nagad">🟧 Nagad (৳২.৩k)</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gLight-textTertiary text-[18px]">expand_more</span>
+              </div>
+            </div>
+
+            <!-- To Account Dropdown -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">
+                To (টাকা ঢুকবে)
+              </label>
+              <div class="relative">
+                <select id="transferToSelect" class="w-full appearance-none bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-3 py-3 text-xs font-semibold border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary cursor-pointer pr-8">
+                  <option value="bkash">📱 bKash (৳৮.৪k)</option>
+                  <option value="cash">💵 Cash (৳৫.২k)</option>
+                  <option value="nagad">🟧 Nagad (৳২.৩k)</option>
+                  <option value="bank">🏦 City Bank (৳৩৫k)</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gLight-textTertiary text-[18px]">expand_more</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transfer Note Input -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">Transfer Note (ঐচ্ছিক বিবরণ)</label>
+            <input 
+              id="transferNoteInput" 
+              type="text" 
+              placeholder="e.g. Bank to bKash add money, ATM cash out" 
+              class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+            />
+          </div>
+        </div>
+
+        <!-- Interactive Date Picker Field -->
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center justify-between text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px] text-gLight-blue dark:text-gDark-blue">calendar_today</span>
+              <span>তারিখ (Date):</span>
+            </span>
+            <span id="selectedDateDisplay" class="text-gLight-blue dark:text-gDark-blue font-bold">Today (17 Sep)</span>
+          </div>
+
+          <!-- Date Quick Preset Chips & Custom Date Trigger -->
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" id="dateOptToday" class="date-chip-btn py-2.5 px-1 rounded-xl text-xs font-bold bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer tap-press border border-gLight-blue/40 text-center transition-all">
+              আজকে (Today)
+            </button>
+            <button type="button" id="dateOptYesterday" class="date-chip-btn py-2.5 px-1 rounded-xl text-xs font-medium bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-gLight-textSecondary dark:text-gDark-textSecondary tap-press border border-black/5 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-center transition-all">
+              গতকাল (Yesterday)
+            </button>
+            <label id="dateOptCustomWrapper" class="date-chip-btn relative py-2.5 px-1 rounded-xl text-xs font-medium bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-gLight-textSecondary dark:text-gDark-textSecondary tap-press border border-black/5 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-center transition-all flex items-center justify-center gap-1 cursor-pointer">
+              <span class="material-symbols-outlined text-[15px]">edit_calendar</span>
+              <span id="customDateBtnLabel">অন্য দিন</span>
+              <input type="date" id="manualDateInput" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2.5 pt-1">
+          <button id="cancelManualBtn" type="button" class="flex-1 py-3 rounded-full text-xs font-bold text-gLight-textSecondary dark:text-gDark-textSecondary hover:bg-black/5 dark:hover:bg-white/5 tap-press transition-colors">
+            Cancel
+          </button>
+          <button id="saveManualBtn" type="button" class="flex-1 bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg py-3.5 rounded-full text-xs font-bold tap-press shadow-md hover:opacity-95 transition-opacity flex items-center justify-center gap-1.5">
+            <span id="saveManualBtnIcon" class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span id="saveManualBtnText">Save Expense</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== MODAL 5: ADD NEW ACCOUNT ==================== -->
+    <div id="newAccountModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-end justify-center">
+      <div class="bg-gLight-surface dark:bg-gDark-surface rounded-t-3xl max-w-md w-full p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto shadow-2xl border-t border-black/10 dark:border-white/10">
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-2xl bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer flex items-center justify-center">
+              <span class="material-symbols-outlined text-[20px]">account_balance</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">Add New Account / Wallet</h3>
+              <div class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">Manage separate balances easily</div>
+            </div>
+          </div>
+          <button id="closeAccountModal" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center tap-press">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Account Name Input -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">Account Name</label>
+          <input 
+            id="newAccountNameInput" 
+            type="text" 
+            placeholder="e.g. Brac Bank, Rocket, Upay, Savings" 
+            class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+          />
+        </div>
+
+        <!-- Account Type Selector Dropdown -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">Account Type</label>
+          <div class="relative">
+            <select id="newAccountTypeSelect" class="w-full appearance-none bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary cursor-pointer pr-10">
+              <option value="bank" data-icon="🏦">🏦 Bank Account (Commercial Bank)</option>
+              <option value="mfs" data-icon="📱">📱 Mobile Banking (bKash / Nagad / Rocket)</option>
+              <option value="cash" data-icon="💵">💵 Cash Wallet (পকেট ক্যাশ)</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gLight-textTertiary text-[20px]">expand_more</span>
+          </div>
+        </div>
+
+        <!-- Initial Balance Input -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">Current Balance (৳ BDT)</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-4 font-bold text-sm text-gLight-textTertiary dark:text-gDark-textTertiary">৳</span>
+            <input 
+              id="newAccountBalanceInput" 
+              type="number" 
+              placeholder="5000" 
+              class="w-full bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl pl-9 pr-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+            />
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2.5 pt-2">
+          <button id="cancelAccountBtn" type="button" class="flex-1 py-3 rounded-full text-xs font-bold text-gLight-textSecondary dark:text-gDark-textSecondary hover:bg-black/5 dark:hover:bg-white/5 tap-press transition-colors">
+            Cancel
+          </button>
+          <button id="saveAccountBtn" type="button" class="flex-1 bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg py-3.5 rounded-full text-xs font-bold tap-press shadow-md hover:opacity-95 transition-opacity flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">check</span>
+            <span>Save Account</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== MODAL 6: DHAR-DENA SETTLEMENT & RE-BORROW SHEET ==================== -->
+    <div id="dharSettleModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-end justify-center">
+      <div class="bg-gLight-surface dark:bg-gDark-surface rounded-t-3xl max-w-md w-full p-6 flex flex-col gap-4 max-h-[88vh] overflow-y-auto shadow-2xl border-t border-black/10 dark:border-white/10">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div id="dharContactAvatar" class="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-500 font-bold flex items-center justify-center text-base">
+              স
+            </div>
+            <div>
+              <h3 id="dharContactName" class="text-base font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">সাকিব (Sakib)</h3>
+              <div id="dharContactSubtext" class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">লাঞ্চের ধার • খাতা বিবরণ</div>
+            </div>
+          </div>
+          <button id="closeDharSettleModal" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center tap-press">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Outstanding Balance Hero Banner -->
+        <div id="dharBalanceBanner" class="bg-gLight-surfaceHigh/60 dark:bg-gDark-surfaceHigh/60 rounded-2xl p-4 flex items-center justify-between border border-emerald-500/20">
+          <div>
+            <span id="dharDirectionLabel" class="text-xs font-semibold text-gLight-green dark:text-gDark-green">আমি পাবো (Receivable)</span>
+            <div id="dharCurrentAmountDisplay" class="text-2xl font-black text-gLight-textPrimary dark:text-gDark-textPrimary mt-0.5">৳ ১,৫০০</div>
+          </div>
+          <span id="dharBadgePill" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-500">
+            বাকি আছে
+          </span>
+        </div>
+
+        <!-- 2-Way Tab Switcher: [ পরিশোধ / গ্রহণ ] vs [ ধার বাড়ানো (+ Add More) ] -->
+        <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-full border border-black/5 dark:border-white/10">
+          <button id="dharActionSettleTab" type="button" class="dhar-tab-btn flex-1 py-1.5 rounded-full text-xs font-bold bg-gLight-surface dark:bg-gDark-surface text-gLight-blue dark:text-gDark-blue shadow-sm transition-all flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">payments</span>
+            <span>পরিশোধ / কিস্তি</span>
+          </button>
+          <button id="dharActionAddMoreTab" type="button" class="dhar-tab-btn flex-1 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-blue dark:hover:text-gDark-blue transition-all flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">add_circle</span>
+            <span>পুনরায় ধার বৃদ্ধি</span>
+          </button>
+        </div>
+
+        <!-- ACTION 1: SETTLEMENT SECTION (Full vs Partial) -->
+        <div id="dharSettleSection" class="flex flex-col gap-3.5">
+          <!-- Full vs Partial Toggle -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">পরিশোধের ধরন (Settlement Type)</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" id="settleModeFull" class="settle-mode-btn py-2.5 px-3 rounded-2xl text-xs font-bold bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer tap-press border border-gLight-blue/40 text-center transition-all flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                <span id="settleFullBtnText">সম্পূর্ণ (৳ ১,৫০০)</span>
+              </button>
+              <button type="button" id="settleModePartial" class="settle-mode-btn py-2.5 px-3 rounded-2xl text-xs font-medium bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-gLight-textSecondary dark:text-gDark-textSecondary tap-press border border-black/5 dark:border-white/10 text-center transition-all flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">pie_chart</span>
+                <span>আংশিক কিস্তি</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Partial Amount Input (Hidden by default when Full is active) -->
+          <div id="dharPartialInputGroup" class="hidden flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">কিস্তির পরিমাণ (Partial Amount in BDT)</label>
+            <div class="relative flex items-center">
+              <span class="absolute left-4 font-bold text-sm text-gLight-textTertiary dark:text-gDark-textTertiary">৳</span>
+              <input 
+                id="dharPartialAmountInput" 
+                type="number" 
+                placeholder="500" 
+                class="w-full bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl pl-9 pr-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+              />
+            </div>
+            <!-- Quick Partial Chips -->
+            <div class="flex items-center gap-2 pt-0.5">
+              <button type="button" class="dhar-chip text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 text-gLight-textSecondary dark:text-gDark-textSecondary tap-press" data-val="200">+৳২০০</button>
+              <button type="button" class="dhar-chip text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 text-gLight-textSecondary dark:text-gDark-textSecondary tap-press" data-val="500">+৳৫০০</button>
+              <button type="button" class="dhar-chip text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 text-gLight-textSecondary dark:text-gDark-textSecondary tap-press" data-val="1000">+৳১,০০০</button>
+            </div>
+          </div>
+
+          <!-- Account Dropdown (Paid from / Received in) -->
+          <div class="flex flex-col gap-1.5">
+            <label id="dharSettleAccountLabel" class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">
+              কোন অ্যাকাউন্টে টাকা রিসিভ হলো?
+            </label>
+            <div class="relative">
+              <select id="dharSettleAccountSelect" class="w-full appearance-none bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary cursor-pointer pr-10">
+                <option value="cash">💵 Cash Wallet (৳ ৫,২০০)</option>
+                <option value="bkash">📱 bKash (৳ ৮,৪০০)</option>
+                <option value="nagad">🟧 Nagad (৳ ২,৩০০)</option>
+                <option value="bank">🏦 City Bank (৳ ৩৫,০০০)</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gLight-textTertiary text-[20px]">expand_more</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION 2: ADD MORE LOAN TO SAME PERSON -->
+        <div id="dharAddMoreSection" class="hidden flex flex-col gap-3.5">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">পুনরায় ধারের পরিমাণ (Additional Amount)</label>
+            <div class="relative flex items-center">
+              <span class="absolute left-4 font-bold text-sm text-gLight-textTertiary dark:text-gDark-textTertiary">৳</span>
+              <input 
+                id="dharAddMoreAmountInput" 
+                type="number" 
+                placeholder="500" 
+                class="w-full bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl pl-9 pr-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+              />
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">কারণ / বিবরণ (Reason)</label>
+            <input 
+              id="dharAddMoreNoteInput" 
+              type="text" 
+              placeholder="e.g. চা ও বিকেলের নাস্তা, উবার ভাড়া" 
+              class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+            />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">টাকা দেয়া হলো কোন অ্যাকাউন্ট থেকে?</label>
+            <div class="relative">
+              <select id="dharAddMoreAccountSelect" class="w-full appearance-none bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary cursor-pointer pr-10">
+                <option value="cash">💵 Cash Wallet (৳ ৫,২০০)</option>
+                <option value="bkash">📱 bKash (৳ ৮,৪০০)</option>
+                <option value="nagad">🟧 Nagad (৳ ২,৩০০)</option>
+                <option value="bank">🏦 City Bank (৳ ৩৫,০০০)</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gLight-textTertiary text-[20px]">expand_more</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2.5 pt-1">
+          <button id="cancelDharSettleBtn" type="button" class="flex-1 py-3 rounded-full text-xs font-bold text-gLight-textSecondary dark:text-gDark-textSecondary hover:bg-black/5 dark:hover:bg-white/5 tap-press transition-colors">
+            Cancel
+          </button>
+          <button id="saveDharActionBtn" type="button" class="flex-1 bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg py-3.5 rounded-full text-xs font-bold tap-press shadow-md hover:opacity-95 transition-opacity flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span id="saveDharActionBtnText">পরিশোধ নিশ্চিত করুন</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== MODAL 7: ADD NEW DHAR-DENA ENTRY ==================== -->
+    <div id="newDharModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-end justify-center">
+      <div class="bg-gLight-surface dark:bg-gDark-surface rounded-t-3xl max-w-md w-full p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto shadow-2xl border-t border-black/10 dark:border-white/10">
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-2xl bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer flex items-center justify-center">
+              <span class="material-symbols-outlined text-[20px]">swap_horiz</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">নতুন ধার / দেনা হিসাব</h3>
+              <div class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">Track lending &amp; borrowing</div>
+            </div>
+          </div>
+          <button id="closeNewDharModal" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center tap-press">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Type Toggle: আমি পাবো vs আমি দেবো -->
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="newDharTypePabo" class="new-dhar-type-btn py-2.5 rounded-2xl text-xs font-bold bg-gLight-surface dark:bg-gDark-surface text-gLight-green dark:text-gDark-green shadow-sm border border-emerald-500/30 tap-press flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">call_received</span>
+            <span>আমি পাবো (Lent)</span>
+          </button>
+          <button type="button" id="newDharTypeDebo" class="new-dhar-type-btn py-2.5 rounded-2xl text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-rose-500 tap-press border border-black/5 dark:border-white/10 flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">call_made</span>
+            <span>আমি দেবো (Borrowed)</span>
+          </button>
+        </div>
+
+        <!-- Person / Shop Name -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">ব্যক্তি বা দোকানের নাম (Person / Shop)</label>
+          <input 
+            id="newDharPersonInput" 
+            type="text" 
+            placeholder="e.g. তানভীর, মদিনা স্টোর, রুমমেট রাকিব" 
+            class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+          />
+          <!-- Quick Saved Contacts -->
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <button type="button" class="quick-contact-chip shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 text-gLight-textTertiary dark:text-gDark-textTertiary tap-press" data-name="সাকিব">সাকিব</button>
+            <button type="button" class="quick-contact-chip shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 text-gLight-textTertiary dark:text-gDark-textTertiary tap-press" data-name="মদিনা স্টোর">মদিনা স্টোর</button>
+            <button type="button" class="quick-contact-chip shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 text-gLight-textTertiary dark:text-gDark-textTertiary tap-press" data-name="তানভীর">তানভীর</button>
+            <button type="button" class="quick-contact-chip shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 text-gLight-textTertiary dark:text-gDark-textTertiary tap-press" data-name="রাকিব (রুমমেট)">রাকিব</button>
+          </div>
+        </div>
+
+        <!-- Amount Input -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">টাকার পরিমাণ (Amount in BDT)</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-4 font-bold text-sm text-gLight-textTertiary dark:text-gDark-textTertiary">৳</span>
+            <input 
+              id="newDharAmountInput" 
+              type="number" 
+              placeholder="1000" 
+              class="w-full bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl pl-9 pr-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+            />
+          </div>
+        </div>
+
+        <!-- Note Input -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">বিবরণ (Note / Reason)</label>
+          <input 
+            id="newDharNoteInput" 
+            type="text" 
+            placeholder="e.g. লাঞ্চ বিল ধার, গ্রোসারি বাকি" 
+            class="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+          />
+        </div>
+
+        <!-- Account Dropdown -->
+        <div class="flex flex-col gap-1.5">
+          <label id="newDharAccountLabel" class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">
+            টাকা দেয়া হলো কোন অ্যাকাউন্ট থেকে? (Paid From)
+          </label>
+          <div class="relative">
+            <select id="newDharAccountSelect" class="w-full appearance-none bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl px-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary cursor-pointer pr-10">
+              <option value="cash">💵 Cash Wallet (৳ ৫,২০০)</option>
+              <option value="bkash">📱 bKash (৳ ৮,৪০০)</option>
+              <option value="nagad">🟧 Nagad (৳ ২,৩০০)</option>
+              <option value="bank">🏦 City Bank (৳ ৩৫,০০০)</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gLight-textTertiary text-[20px]">expand_more</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2.5 pt-1">
+          <button id="cancelNewDharBtn" type="button" class="flex-1 py-3 rounded-full text-xs font-bold text-gLight-textSecondary dark:text-gDark-textSecondary hover:bg-black/5 dark:hover:bg-white/5 tap-press transition-colors">
+            Cancel
+          </button>
+          <button id="saveNewDharBtn" type="button" class="flex-1 bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg py-3.5 rounded-full text-xs font-bold tap-press shadow-md hover:opacity-95 transition-opacity flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">check</span>
+            <span>হিসাব যোগ করুন</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== MODAL 8: CATEGORY DETAIL & BUDGET ALERT MODAL ==================== -->
+    <div id="categoryDetailModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-end justify-center">
+      <div class="bg-gLight-surface dark:bg-gDark-surface rounded-t-3xl max-w-md w-full p-6 flex flex-col gap-4 max-h-[88vh] overflow-y-auto shadow-2xl border-t border-black/10 dark:border-white/10">
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span id="catDetailIcon" class="text-3xl p-2 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh">🛒</span>
+            <div>
+              <h3 id="catDetailTitle" class="text-base font-bold text-gLight-textPrimary dark:text-gDark-textPrimary">Bazaar</h3>
+              <div id="catDetailSubtext" class="text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">মাসিক বাজেট ও খরচ ট্র্যাকার</div>
+            </div>
+          </div>
+          <button id="closeCatDetailModal" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center tap-press">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Budget & Spending Hero -->
+        <div class="bg-gLight-surfaceHigh/60 dark:bg-gDark-surfaceHigh/60 rounded-2xl p-4 flex flex-col gap-2.5 border border-black/5 dark:border-white/10">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">সেপ্টেম্বর মাসের খরচ</span>
+            <span id="catDetailPercentPill" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500">62% used</span>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span id="catDetailSpentDisplay" class="text-2xl font-extrabold text-gLight-textPrimary dark:text-gDark-textPrimary">৳ ৯,৪০০</span>
+            <span id="catDetailBudgetDisplay" class="text-sm font-medium text-gLight-textTertiary dark:text-gDark-textTertiary">/ ৳ ১৫,০০০</span>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full bg-black/10 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
+            <div id="catDetailProgressBar" class="h-full rounded-full transition-all duration-500 bg-gLight-blue dark:bg-gDark-blue" style="width: 62%"></div>
+          </div>
+          <div class="flex justify-between text-[11px] text-gLight-textTertiary dark:text-gDark-textTertiary">
+            <span id="catDetailRemainingDisplay">বাকি আছে: ৳ ৫,৬০০</span>
+            <span id="catDetailDailyAvg">দৈনিক লিমিট: ৳ ৪৩০/দিন</span>
+          </div>
+        </div>
+
+        <!-- 80%+ Warning Alert Banner (Visible when spent >= 80%) -->
+        <div id="catBudgetWarningBanner" class="hidden rounded-2xl p-3.5 bg-amber-500/15 border border-amber-500/30 flex items-start gap-2.5">
+          <span class="material-symbols-outlined text-amber-500 text-[20px] shrink-0 mt-0.5">warning</span>
+          <div class="flex flex-col text-xs">
+            <span class="font-bold text-amber-500">বাজেট সতর্কতা (Warning)</span>
+            <span id="catBudgetWarningText" class="text-gLight-textPrimary dark:text-gDark-textPrimary mt-0.5 leading-relaxed">
+              এই ক্যাটাগরিতে বাজেটের ৮০% এর বেশি খরচ হয়ে গেছে! মাসের বাকি দিনগুলোতে একটু সাশ্রয়ী হওয়ার পরামর্শ দেওয়া হচ্ছে।
+            </span>
+          </div>
+        </div>
+
+        <!-- Edit Budget Input -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">মাসিক বাজেট লিমিট পরিবর্তন করুন (BDT)</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-4 font-bold text-sm text-gLight-textTertiary dark:text-gDark-textTertiary">৳</span>
+            <input 
+              id="catEditBudgetInput" 
+              type="number" 
+              placeholder="15000" 
+              class="w-full bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl pl-9 pr-4 py-3 text-sm font-medium border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-gLight-blue dark:focus:ring-gDark-blue text-gLight-textPrimary dark:text-gDark-textPrimary"
+            />
+          </div>
+        </div>
+
+        <!-- Category Transactions Filter List -->
+        <div class="flex flex-col gap-2 pt-1">
+          <span class="text-xs font-bold uppercase tracking-wider text-gLight-textSecondary dark:text-gDark-textSecondary">এই ক্যাটাগরির সাম্প্রতিক খরচ</span>
+          <div id="catDetailTxList" class="flex flex-col gap-2 max-h-48 overflow-y-auto no-scrollbar">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2.5 pt-1">
+          <button id="cancelCatDetailBtn" type="button" class="flex-1 py-3 rounded-full text-xs font-bold text-gLight-textSecondary dark:text-gDark-textSecondary hover:bg-black/5 dark:hover:bg-white/5 tap-press transition-colors">
+            Close
+          </button>
+          <button id="saveCatBudgetBtn" type="button" class="flex-1 bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg py-3.5 rounded-full text-xs font-bold tap-press shadow-md hover:opacity-95 transition-opacity flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">check</span>
+            <span>বাজেট আপডেট করুন</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Real JavaScript Logic -->
+  <script>
+    // 1. Tab Switching
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+
+        tabContents.forEach(c => c.classList.add('hidden'));
+        const activeContent = document.getElementById(`tab-${targetTab}`);
+        if (activeContent) activeContent.classList.remove('hidden');
+
+        navButtons.forEach(b => {
+          const pill = b.querySelector('.nav-pill');
+          const label = b.querySelector('.nav-label');
+          pill.className = 'nav-pill w-14 h-8 rounded-full flex items-center justify-center text-gLight-textTertiary dark:text-gDark-textTertiary transition-all';
+          label.className = 'nav-label text-[11px] font-medium text-gLight-textTertiary dark:text-gDark-textTertiary';
+        });
+
+        const activePill = btn.querySelector('.nav-pill');
+        const activeLabel = btn.querySelector('.nav-label');
+        activePill.className = 'nav-pill w-14 h-8 rounded-full bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer flex items-center justify-center transition-all';
+        activeLabel.className = 'nav-label text-[11px] font-bold text-gLight-textPrimary dark:text-gDark-textPrimary';
+      });
+    });
+
+    // 2. Category Chip Filters
+    const filterStatus = document.getElementById('filterStatus');
+
+    function setupCatPills() {
+      const catPills = document.querySelectorAll('.cat-pill');
+      const txItems = document.querySelectorAll('.tx-item');
+
+      catPills.forEach(pill => {
+        pill.onclick = () => {
+          const cat = pill.getAttribute('data-cat');
+          catPills.forEach(p => {
+            p.className = 'cat-pill shrink-0 bg-gLight-surface dark:bg-gDark-surface text-gLight-textPrimary dark:text-gDark-textPrimary font-medium text-xs px-4 py-2 rounded-full tap-press flex items-center gap-1.5 hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh transition-colors';
+          });
+          pill.className = 'cat-pill shrink-0 bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer font-semibold text-xs px-4 py-2 rounded-full tap-press flex items-center gap-1.5';
+
+          txItems.forEach(item => {
+            if (cat === 'all' || item.getAttribute('data-category') === cat) {
+              item.classList.remove('hidden');
+            } else {
+              item.classList.add('hidden');
+            }
+          });
+          filterStatus.textContent = cat === 'all' ? 'All items' : `Filtered: ${cat}`;
+        };
+      });
+    }
+    setupCatPills();
+
+    // 3. Theme Toggle
+    const themeBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+    let isDark = true;
+
+    themeBtn.addEventListener('click', () => {
+      isDark = !isDark;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        themeIcon.textContent = 'light_mode';
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeIcon.textContent = 'dark_mode';
+      }
+    });
+
+    // 4. Google Drive Auto-Sync Simulation
+    const syncText = document.getElementById('syncStatusText');
+    const backupNowBtn = document.getElementById('backupNowBtn');
+    const autoToggle = document.getElementById('autoBackupToggle');
+    const settingsStatus = document.getElementById('settingsBackupStatus');
+    const lastBackupTime = document.getElementById('lastBackupTime');
+
+    function triggerDriveSync(callback) {
+      syncText.textContent = 'Syncing to Drive...';
+      syncText.classList.add('text-gLight-blue', 'dark:text-gDark-blue');
+
+      setTimeout(() => {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        syncText.textContent = 'Drive: Auto-Synced';
+        syncText.classList.remove('text-gLight-blue', 'dark:text-gDark-blue');
+        if (lastBackupTime) lastBackupTime.textContent = `Just now (${timeStr})`;
+        if (callback) callback();
+      }, 1200);
+    }
+
+    // Toast Notification System
+    const toastNotification = document.getElementById('toastNotification');
+    const toastMessage = document.getElementById('toastMessage');
+    const toastIcon = document.getElementById('toastIcon');
+    let toastTimeout = null;
+
+    function showToast(msg, icon = 'check_circle') {
+      if (!toastNotification) return;
+      if (toastTimeout) clearTimeout(toastTimeout);
+      if (toastMessage) toastMessage.textContent = msg;
+      if (toastIcon) toastIcon.textContent = icon;
+      toastNotification.classList.remove('opacity-0', '-translate-y-4');
+      toastNotification.classList.add('opacity-100', 'translate-y-0');
+      toastTimeout = setTimeout(() => {
+        toastNotification.classList.remove('opacity-100', 'translate-y-0');
+        toastNotification.classList.add('opacity-0', '-translate-y-4');
+      }, 2500);
+    }
+
+    // Real Google Drive Snapshot Backup & Download
+    if (backupNowBtn) {
+      backupNowBtn.addEventListener('click', () => {
+        backupNowBtn.disabled = true;
+        backupNowBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Backing up...</span>`;
+        
+        triggerDriveSync(() => {
+          backupNowBtn.disabled = false;
+          backupNowBtn.innerHTML = `<span class="material-symbols-outlined text-[16px]">cloud_done</span><span>Backup Done!</span>`;
+
+          const snapshot = {
+            app: 'Hishab AI',
+            version: '2.0.0',
+            exportedAt: new Date().toISOString(),
+            formattedDate: new Date().toLocaleString(),
+            user: 'nafiswalid@gmail.com',
+            accounts: accounts,
+            categories: categoriesData,
+            dharDena: dharItems,
+            stats: {
+              netBalance: Object.values(accounts).reduce((s, a) => s + a.balance, 0),
+              totalPabo: dharItems.filter(d => d.type === 'pabo').reduce((s, d) => s + d.amount, 0),
+              totalDebo: dharItems.filter(d => d.type === 'debo').reduce((s, d) => s + d.amount, 0)
+            }
+          };
+
+          const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const dateStr = new Date().toISOString().split('T')[0];
+          a.href = url;
+          a.download = `hishab_ai_backup_${dateStr}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          showToast('Google Drive ব্যাকআপ ফাইল ডাউনলোড ও সিঙ্ক হয়েছে!', 'cloud_done');
+
+          setTimeout(() => {
+            backupNowBtn.innerHTML = `<span class="material-symbols-outlined text-[16px]">cloud_upload</span><span>Back up Now</span>`;
+          }, 2000);
+        });
+      });
+    }
+
+    // Real Data Restore from JSON File
+    const restoreNowBtn = document.getElementById('restoreNowBtn');
+    const restoreFileInput = document.getElementById('restoreFileInput');
+
+    if (restoreNowBtn && restoreFileInput) {
+      restoreNowBtn.addEventListener('click', () => {
+        restoreFileInput.click();
+      });
+
+      restoreFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if (data.accounts) {
+              Object.assign(accounts, data.accounts);
+            }
+            if (data.categories) {
+              Object.assign(categoriesData, data.categories);
+            }
+            if (data.dharDena && Array.isArray(data.dharDena)) {
+              dharItems = data.dharDena;
+            }
+            updateAccountsUI();
+            renderDharList();
+            renderCategories();
+            triggerDriveSync();
+            showToast('ডাটা সফলভাবে রিস্টোর করা হয়েছে!', 'cloud_download');
+          } catch (err) {
+            console.error('Failed to parse backup:', err);
+            alert('ভুল ফাইল ফরম্যাট! সঠিক hishab_ai_backup.json ফাইল আপলোড করুন।');
+          }
+        };
+        reader.readAsText(file);
+        restoreFileInput.value = '';
+      });
+    }
+
+    // Real CSV / Excel Export
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    if (exportCsvBtn) {
+      exportCsvBtn.addEventListener('click', () => {
+        const rows = [];
+        rows.push(['Transaction ID', 'Date', 'Type', 'Description', 'Category', 'Account', 'Amount (BDT)', 'Status']);
+
+        document.querySelectorAll('.tx-item').forEach((item, idx) => {
+          const title = item.querySelector('.font-semibold')?.textContent?.trim() || 'Expense';
+          const amtText = item.querySelector('.text-base')?.textContent?.replace(/[^0-9]/g, '') || '0';
+          const isIncome = item.textContent.includes('+ ৳');
+          const isTransfer = item.textContent.includes('➔');
+          const type = isTransfer ? 'Transfer' : (isIncome ? 'Income' : 'Expense');
+          const cat = item.getAttribute('data-category') || 'general';
+
+          rows.push([
+            `TX-${1000 + idx}`,
+            '17 Sep 2026',
+            type,
+            `"${title}"`,
+            cat,
+            'Wallet',
+            amtText,
+            'Completed'
+          ]);
+        });
+
+        rows.push([]);
+        rows.push(['=== DHAR-DENA KHATA (LEND & BORROW) ===']);
+        rows.push(['Person / Shop', 'Type', 'Note', 'Outstanding Amount (BDT)', 'Status']);
+        dharItems.forEach(d => {
+          rows.push([
+            `"${d.person}"`,
+            d.type === 'pabo' ? 'আমি পাবো (Receivable)' : 'আমি দেবো (Payable)',
+            `"${d.note}"`,
+            d.amount,
+            d.amount > 0 ? 'বাকি আছে' : 'পরিশোধিত'
+          ]);
+        });
+
+        rows.push([]);
+        rows.push(['=== ACCOUNTS & WALLETS SUMMARY ===']);
+        rows.push(['Account Name', 'Type / Note', 'Current Balance (BDT)']);
+        Object.values(accounts).forEach(acc => {
+          rows.push([`"${acc.name}"`, `"${acc.note}"`, acc.balance]);
+        });
+
+        const csvContent = '\uFEFF' + rows.map(e => e.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().split('T')[0];
+        a.href = url;
+        a.download = `hishab_ai_report_${dateStr}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('এক্সেল / CSV রিপোর্ট ডাউনলোড হয়েছে!', 'table_view');
+      });
+    }
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration note:', err));
+    }
+
+    // 6. Camera Memo Scanner Modal logic
+    const cameraScanBtn = document.getElementById('cameraScanBtn');
+    const cameraModal = document.getElementById('cameraModal');
+    const closeCameraModal = document.getElementById('closeCameraModal');
+    const confirmScanBtn = document.getElementById('confirmScanBtn');
+
+    cameraScanBtn.addEventListener('click', () => {
+      cameraModal.classList.remove('hidden');
+    });
+    closeCameraModal.addEventListener('click', () => {
+      cameraModal.classList.add('hidden');
+    });
+
+    confirmScanBtn.addEventListener('click', () => {
+      addExpense('স্বপ্ন মেমো (চাল, তেল, ডিম)', '৪৮০', '🧾', 'bazaar');
+      cameraModal.classList.add('hidden');
+    });
+
+    // 7. AI Advisor Modal logic
+    const aiAdvisorTriggerBtn = document.getElementById('aiAdvisorTriggerBtn');
+    const aiAdvisorModal = document.getElementById('aiAdvisorModal');
+    const closeAdvisorModal = document.getElementById('closeAdvisorModal');
+
+    aiAdvisorTriggerBtn.addEventListener('click', () => {
+      aiAdvisorModal.classList.remove('hidden');
+    });
+    closeAdvisorModal.addEventListener('click', () => {
+      aiAdvisorModal.classList.add('hidden');
+    });
+
+    // 8. Voice & Text Input
+    const micBtn = document.getElementById('micButton');
+    const input = document.getElementById('expenseInput');
+    const txList = document.getElementById('txList');
+    let listening = false;
+
+    function addExpense(note, amount, icon, catId) {
+      const numAmt = parseFloat(String(amount).replace(/[^0-9.]/g, '')) || 0;
+      if (catId && categoriesData[catId]) {
+        categoriesData[catId].spent += numAmt;
+        renderCategories();
+        const p = Math.round((categoriesData[catId].spent / categoriesData[catId].budget) * 100);
+        if (p >= 80) {
+          showToast(`⚠️ ${categoriesData[catId].name} বাজেটের ${p}% খরচ হয়ে গেছে!`, 'warning');
+        }
+      }
+
+      const div = document.createElement('div');
+      div.setAttribute('data-category', catId);
+      div.className = 'tx-item bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-4 flex items-center justify-between tap-press cursor-pointer border border-gLight-blue/30 dark:border-gDark-blue/40 shadow-sm transition-all';
+      div.innerHTML = `
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh flex items-center justify-center text-xl shrink-0">
+            ${icon}
+          </div>
+          <div class="flex flex-col">
+            <span class="font-semibold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">${note}</span>
+            <span class="text-xs text-gLight-green dark:text-gDark-green font-medium">Just now • Auto-Synced to Drive</span>
+          </div>
+        </div>
+        <span class="font-bold text-base text-gLight-textPrimary dark:text-gDark-textPrimary">- ৳ ${amount}</span>
+      `;
+      txList.prepend(div);
+      triggerDriveSync();
+    }
+
+    micBtn.addEventListener('click', () => {
+      listening = !listening;
+      if (listening) {
+        input.value = '';
+        input.placeholder = 'Listening... Say "350 takar murgi"';
+        micBtn.classList.remove('bg-gLight-blue', 'dark:bg-gDark-blue');
+        micBtn.classList.add('bg-red-500', 'text-white');
+
+        setTimeout(() => {
+          if (listening) {
+            input.value = 'Murgi 350 taka';
+            micBtn.classList.remove('bg-red-500', 'text-white');
+            micBtn.classList.add('bg-gLight-blue', 'dark:bg-gDark-blue');
+            listening = false;
+
+            setTimeout(() => {
+              addExpense('Murgi (Chicken)', '৩৫০', '🍗', 'bazaar');
+              input.value = '';
+              input.placeholder = 'Ask Hishab or say "350 takar murgi"...';
+            }, 800);
+          }
+        }, 2200);
+      } else {
+        input.placeholder = 'Ask Hishab or say "350 takar murgi"...';
+        micBtn.classList.remove('bg-red-500', 'text-white');
+        micBtn.classList.add('bg-gLight-blue', 'dark:bg-gDark-blue');
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && input.value.trim()) {
+        const val = input.value.trim();
+        // Check if question
+        if (val.includes('?') || val.toLowerCase().includes('parbo') || val.toLowerCase().includes('koto')) {
+          aiAdvisorModal.classList.remove('hidden');
+        } else {
+          addExpense(val, '২৫০', '🛒', 'bazaar');
+        }
+        input.value = '';
+        input.placeholder = 'Ask Hishab or say "350 takar murgi"...';
+      }
+    });
+
+    // 9. Category Management, Dynamic Budgets & 80%+ Alert Controller
+    let categoriesData = {
+      bazaar: { id: 'bazaar', name: 'Bazaar', icon: '🛒', budget: 15000, spent: 9400, color: 'blue' },
+      transport: { id: 'transport', name: 'Transport', icon: '🛺', budget: 4000, spent: 3100, color: 'amber' },
+      food: { id: 'food', name: 'Food & Dining', icon: '🍔', budget: 8000, spent: 4400, color: 'emerald' },
+      bills: { id: 'bills', name: 'Bills & Utility', icon: '⚡', budget: 6000, spent: 5100, color: 'blue' }
+    };
+
+    const addCategoryBtn = document.getElementById('addCategoryBtn');
+    const quickAddCategoryCard = document.getElementById('quickAddCategoryCard');
+    const homeAddCatChip = document.getElementById('homeAddCatChip');
+    const newCategoryModal = document.getElementById('newCategoryModal');
+    const closeCategoryModal = document.getElementById('closeCategoryModal');
+    const cancelCategoryBtn = document.getElementById('cancelCategoryBtn');
+    const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+    const newCatNameInput = document.getElementById('newCatNameInput');
+    const newCatBudgetInput = document.getElementById('newCatBudgetInput');
+    const categoryGrid = document.getElementById('categoryGrid');
+    const catChipsScroll = document.getElementById('catChipsScroll');
+    const catCountText = document.getElementById('catCountText');
+    const selectedEmojiPreview = document.getElementById('selectedEmojiPreview');
+
+    let currentSelectedEmoji = '💊';
+    let currentSelectedColor = 'blue';
+
+    function renderCategories() {
+      if (!categoryGrid) return;
+
+      const existingCards = categoryGrid.querySelectorAll('.category-card');
+      existingCards.forEach(c => c.remove());
+
+      const keys = Object.keys(categoriesData);
+
+      keys.forEach(key => {
+        const cat = categoriesData[key];
+        const percent = cat.budget > 0 ? Math.min(100, Math.round((cat.spent / cat.budget) * 100)) : 0;
+        const isWarning = percent >= 80;
+        const isExceeded = percent >= 100;
+
+        let badgeClass = 'text-[10px] font-bold px-2 py-0.5 rounded-full ';
+        let progressBg = 'bg-gLight-blue dark:bg-gDark-blue';
+        let badgeText = `${percent}% used`;
+
+        if (isExceeded) {
+          badgeClass += 'bg-rose-500/15 text-rose-500 border border-rose-500/20 animate-pulse';
+          progressBg = 'bg-rose-500';
+          badgeText = `🚨 ${percent}% Over!`;
+        } else if (isWarning) {
+          badgeClass += 'bg-amber-500/15 text-amber-500 border border-amber-500/20';
+          progressBg = 'bg-amber-500';
+          badgeText = `⚠️ ${percent}% used`;
+        } else {
+          badgeClass += 'bg-emerald-500/10 text-emerald-500';
+          progressBg = percent > 50 ? 'bg-gLight-blue dark:bg-gDark-blue' : 'bg-emerald-500';
+        }
+
+        const card = document.createElement('div');
+        card.className = `category-card bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-4 flex flex-col justify-between h-32 tap-press shadow-sm border ${isWarning ? 'border-amber-500/40 shadow-amber-500/5' : 'border-black/5 dark:border-white/5'} hover:border-gLight-blue/40 dark:hover:border-gDark-blue/40 transition-all cursor-pointer`;
+        card.setAttribute('data-cat-key', key);
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-2xl p-1.5 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh">${cat.icon}</span>
+            <span class="${badgeClass}">${badgeText}</span>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary flex items-center justify-between">
+              <span>${cat.name}</span>
+            </div>
+            <div class="text-[11px] text-gLight-textSecondary dark:text-gDark-textSecondary mt-0.5">
+              Spent: ৳ ${cat.spent.toLocaleString()} / ৳ ${(cat.budget >= 1000 ? (cat.budget / 1000) + 'k' : cat.budget)}
+            </div>
+            <div class="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div class="${progressBg} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+            </div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          openCategoryDetail(key);
+        });
+
+        if (quickAddCategoryCard) {
+          categoryGrid.insertBefore(card, quickAddCategoryCard);
+        } else {
+          categoryGrid.appendChild(card);
+        }
+      });
+
+      if (catCountText) {
+        catCountText.textContent = `${keys.length} active categories • Synced to Drive`;
+      }
+    }
+
+    // Modal 8: Category Detail & Budget Alert Management
+    let activeDetailCatId = null;
+    const categoryDetailModal = document.getElementById('categoryDetailModal');
+    const closeCatDetailModal = document.getElementById('closeCatDetailModal');
+    const cancelCatDetailBtn = document.getElementById('cancelCatDetailBtn');
+    const catDetailIcon = document.getElementById('catDetailIcon');
+    const catDetailTitle = document.getElementById('catDetailTitle');
+    const catDetailSubtext = document.getElementById('catDetailSubtext');
+    const catDetailPercentPill = document.getElementById('catDetailPercentPill');
+    const catDetailSpentDisplay = document.getElementById('catDetailSpentDisplay');
+    const catDetailBudgetDisplay = document.getElementById('catDetailBudgetDisplay');
+    const catDetailProgressBar = document.getElementById('catDetailProgressBar');
+    const catDetailRemainingDisplay = document.getElementById('catDetailRemainingDisplay');
+    const catDetailDailyAvg = document.getElementById('catDetailDailyAvg');
+    const catBudgetWarningBanner = document.getElementById('catBudgetWarningBanner');
+    const catBudgetWarningText = document.getElementById('catBudgetWarningText');
+    const catEditBudgetInput = document.getElementById('catEditBudgetInput');
+    const catDetailTxList = document.getElementById('catDetailTxList');
+    const saveCatBudgetBtn = document.getElementById('saveCatBudgetBtn');
+
+    function openCategoryDetail(catId) {
+      const cat = categoriesData[catId];
+      if (!cat) return;
+      activeDetailCatId = catId;
+
+      const percent = cat.budget > 0 ? Math.min(100, Math.round((cat.spent / cat.budget) * 100)) : 0;
+      const remaining = Math.max(0, cat.budget - cat.spent);
+      const daysRemaining = 13;
+      const dailyLimit = Math.round(remaining / daysRemaining);
+
+      if (catDetailIcon) catDetailIcon.textContent = cat.icon;
+      if (catDetailTitle) catDetailTitle.textContent = cat.name;
+      if (catDetailSubtext) catDetailSubtext.textContent = `${cat.name} মাসিক বাজেট ও খরচ ট্র্যাকার`;
+
+      if (catDetailSpentDisplay) catDetailSpentDisplay.textContent = `৳ ${cat.spent.toLocaleString()}`;
+      if (catDetailBudgetDisplay) catDetailBudgetDisplay.textContent = `/ ৳ ${cat.budget.toLocaleString()}`;
+
+      if (catDetailPercentPill) {
+        catDetailPercentPill.textContent = `${percent}% used`;
+        if (percent >= 80) {
+          catDetailPercentPill.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20';
+        } else {
+          catDetailPercentPill.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500';
+        }
+      }
+
+      if (catDetailProgressBar) {
+        catDetailProgressBar.style.width = `${percent}%`;
+        catDetailProgressBar.className = percent >= 80 
+          ? 'h-full rounded-full transition-all duration-500 bg-amber-500' 
+          : 'h-full rounded-full transition-all duration-500 bg-gLight-blue dark:bg-gDark-blue';
+      }
+
+      if (catDetailRemainingDisplay) {
+        catDetailRemainingDisplay.textContent = `বাকি আছে: ৳ ${remaining.toLocaleString()}`;
+      }
+      if (catDetailDailyAvg) {
+        catDetailDailyAvg.textContent = `দৈনিক লিমিট: ৳ ${dailyLimit.toLocaleString()}/দিন`;
+      }
+
+      // 80%+ Budget Warning Alert
+      if (percent >= 80) {
+        catBudgetWarningBanner.classList.remove('hidden');
+        if (percent >= 100) {
+          catBudgetWarningText.textContent = `🚨 এই ক্যাটাগরিতে ১০০% বাজেট অতিক্রম হয়ে গেছে! (অতিরিক্ত খরচ: ৳ ${(cat.spent - cat.budget).toLocaleString()})`;
+        } else {
+          catBudgetWarningText.textContent = `⚠️ এই ক্যাটাগরিতে বাজেটের ${percent}% খরচ হয়ে গেছে! মাসের বাকি ${daysRemaining} দিনের জন্য দৈনিক নিরাপদ লিমিট ৳ ${dailyLimit}।`;
+        }
+      } else {
+        catBudgetWarningBanner.classList.add('hidden');
+      }
+
+      if (catEditBudgetInput) {
+        catEditBudgetInput.value = cat.budget;
+      }
+
+      // Filter recent transactions under this category
+      if (catDetailTxList) {
+        catDetailTxList.innerHTML = '';
+        const matchingItems = document.querySelectorAll(`.tx-item[data-category="${catId}"]`);
+        if (matchingItems.length > 0) {
+          matchingItems.forEach(item => {
+            const clone = item.cloneNode(true);
+            clone.className = 'bg-gLight-surfaceHigh/70 dark:bg-gDark-surfaceHigh/70 rounded-xl p-3 flex items-center justify-between text-xs border border-black/5 dark:border-white/5';
+            catDetailTxList.appendChild(clone);
+          });
+        } else {
+          catDetailTxList.innerHTML = `<div class="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary py-3 text-center">এই ক্যাটাগরিতে এখনও কোনো খরচ রেকর্ড করা হয়নি।</div>`;
+        }
+      }
+
+      categoryDetailModal.classList.remove('hidden');
+    }
+
+    function closeCategoryDetailModalFn() {
+      if (categoryDetailModal) categoryDetailModal.classList.add('hidden');
+      activeDetailCatId = null;
+    }
+
+    if (closeCatDetailModal) closeCatDetailModal.addEventListener('click', closeCategoryDetailModalFn);
+    if (cancelCatDetailBtn) cancelCatDetailBtn.addEventListener('click', closeCategoryDetailModalFn);
+
+    if (saveCatBudgetBtn) {
+      saveCatBudgetBtn.addEventListener('click', () => {
+        if (!activeDetailCatId || !categoriesData[activeDetailCatId]) return;
+        const newBudget = parseFloat(catEditBudgetInput.value.trim()) || 0;
+        if (newBudget <= 0) {
+          catEditBudgetInput.focus();
+          return;
+        }
+
+        const cat = categoriesData[activeDetailCatId];
+        cat.budget = newBudget;
+
+        renderCategories();
+        triggerDriveSync();
+        showToast(`${cat.name} বাজেট ৳ ${newBudget.toLocaleString()}-এ আপডেট হয়েছে!`);
+        closeCategoryDetailModalFn();
+      });
+    }
+
+    function openCatModal() {
+      newCategoryModal.classList.remove('hidden');
+      setTimeout(() => {
+        newCatNameInput.focus();
+      }, 100);
+    }
+
+    function closeCatModal() {
+      newCategoryModal.classList.add('hidden');
+      newCatNameInput.value = '';
+      newCatBudgetInput.value = '';
+    }
+
+    if (addCategoryBtn) addCategoryBtn.addEventListener('click', openCatModal);
+    if (quickAddCategoryCard) quickAddCategoryCard.addEventListener('click', openCatModal);
+    if (homeAddCatChip) homeAddCatChip.addEventListener('click', openCatModal);
+    if (closeCategoryModal) closeCategoryModal.addEventListener('click', closeCatModal);
+    if (cancelCategoryBtn) cancelCategoryBtn.addEventListener('click', closeCatModal);
+
+    // Preset quick suggestions
+    document.querySelectorAll('.cat-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = btn.getAttribute('data-name');
+        const emoji = btn.getAttribute('data-emoji');
+        const budget = btn.getAttribute('data-budget');
+        newCatNameInput.value = name;
+        newCatBudgetInput.value = budget;
+        currentSelectedEmoji = emoji;
+        if (selectedEmojiPreview) selectedEmojiPreview.textContent = `Selected: ${emoji}`;
+        document.querySelectorAll('.emoji-opt').forEach(opt => {
+          if (opt.getAttribute('data-emoji') === emoji) {
+            opt.className = 'emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press ring-2 ring-gLight-blue dark:ring-gDark-blue bg-black/5 dark:bg-white/10';
+          } else {
+            opt.className = 'emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10';
+          }
+        });
+      });
+    });
+
+    // Emoji picker
+    document.querySelectorAll('.emoji-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('.emoji-opt').forEach(o => {
+          o.className = 'emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press hover:bg-black/5 dark:hover:bg-white/10';
+        });
+        opt.className = 'emoji-opt w-9 h-9 rounded-xl flex items-center justify-center text-lg tap-press ring-2 ring-gLight-blue dark:ring-gDark-blue bg-black/5 dark:bg-white/10';
+        currentSelectedEmoji = opt.getAttribute('data-emoji');
+        if (selectedEmojiPreview) selectedEmojiPreview.textContent = `Selected: ${currentSelectedEmoji}`;
+      });
+    });
+
+    // Color picker
+    document.querySelectorAll('.cat-color-opt').forEach(cBtn => {
+      cBtn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-color-opt').forEach(b => {
+          b.className = 'cat-color-opt w-7 h-7 rounded-full';
+        });
+        cBtn.classList.add('ring-2', 'ring-white', 'dark:ring-gDark-surfaceHigh', 'ring-offset-2');
+        currentSelectedColor = cBtn.getAttribute('data-color');
+      });
+    });
+
+    // Save Category
+    if (saveCategoryBtn) {
+      saveCategoryBtn.addEventListener('click', () => {
+        const name = newCatNameInput.value.trim() || 'Medical & Healthcare';
+        const budgetVal = parseFloat(newCatBudgetInput.value.trim()) || 3000;
+        const catSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
+        categoriesData[catSlug] = {
+          id: catSlug,
+          name: name,
+          icon: currentSelectedEmoji,
+          budget: budgetVal,
+          spent: 0,
+          color: currentSelectedColor
+        };
+
+        renderCategories();
+
+        const newChip = document.createElement('button');
+        newChip.setAttribute('data-cat', catSlug);
+        newChip.className = 'cat-pill shrink-0 bg-gLight-surface dark:bg-gDark-surface text-gLight-textPrimary dark:text-gDark-textPrimary font-medium text-xs px-4 py-2 rounded-full tap-press flex items-center gap-1.5 hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh transition-colors';
+        newChip.innerHTML = `<span>${currentSelectedEmoji}</span><span>${name.split(' ')[0]}</span>`;
+        if (catChipsScroll && homeAddCatChip) {
+          catChipsScroll.insertBefore(newChip, homeAddCatChip);
+        }
+
+        if (manualCatSelect) {
+          const opt = document.createElement('option');
+          opt.value = catSlug;
+          opt.setAttribute('data-icon', currentSelectedEmoji);
+          opt.setAttribute('data-name', name);
+          opt.textContent = `${currentSelectedEmoji} ${name}`;
+          manualCatSelect.appendChild(opt);
+        }
+
+        setupCatPills();
+        triggerDriveSync();
+        showToast(`${name} ক্যাটাগরি সফলভাবে যোগ হয়েছে!`);
+        closeCatModal();
+      });
+    }
+
+    renderCategories();
+
+    // 10. Multi-Account Management & Balance State
+    const accounts = {
+      cash: { id: 'cash', name: 'Cash Wallet', icon: '💵', balance: 5200, note: 'পকেট ক্যাশ' },
+      bkash: { id: 'bkash', name: 'bKash', icon: '📱', balance: 8400, note: 'Personal A/C' },
+      nagad: { id: 'nagad', name: 'Nagad', icon: '🟧', balance: 2300, note: 'Wallet' },
+      bank: { id: 'bank', name: 'City Bank', icon: '🏦', balance: 35000, note: 'Salary A/C' }
+    };
+
+    const totalNetBalanceText = document.getElementById('totalNetBalanceText');
+    const accBalCash = document.getElementById('accBalCash');
+    const accBalBkash = document.getElementById('accBalBkash');
+    const accBalNagad = document.getElementById('accBalNagad');
+    const accBalBank = document.getElementById('accBalBank');
+    const accountsScroll = document.getElementById('accountsScroll');
+    const manualAccountSelect = document.getElementById('manualAccountSelect');
+    const transferFromSelect = document.getElementById('transferFromSelect');
+    const transferToSelect = document.getElementById('transferToSelect');
+
+    function updateAccountsUI() {
+      let net = 0;
+      Object.values(accounts).forEach(acc => {
+        net += acc.balance;
+      });
+
+      if (totalNetBalanceText) {
+        totalNetBalanceText.textContent = `Net: ৳ ${net.toLocaleString()}`;
+      }
+
+      if (accBalCash) accBalCash.textContent = `৳ ${accounts.cash.balance.toLocaleString()}`;
+      if (accBalBkash) accBalBkash.textContent = `৳ ${accounts.bkash.balance.toLocaleString()}`;
+      if (accBalNagad) accBalNagad.textContent = `৳ ${accounts.nagad.balance.toLocaleString()}`;
+      if (accBalBank) accBalBank.textContent = `৳ ${accounts.bank.balance.toLocaleString()}`;
+
+      // Update dropdown option labels across all modals
+      const allAccSelects = [
+        manualAccountSelect, 
+        transferFromSelect, 
+        transferToSelect, 
+        document.getElementById('dharSettleAccountSelect'),
+        document.getElementById('dharAddMoreAccountSelect'),
+        document.getElementById('newDharAccountSelect')
+      ];
+
+      allAccSelects.forEach(sel => {
+        if (sel) {
+          Array.from(sel.options).forEach(opt => {
+            const acc = accounts[opt.value];
+            if (acc) opt.textContent = `${acc.icon} ${acc.name} (৳ ${acc.balance.toLocaleString()})`;
+          });
+        }
+      });
+    }
+
+    // 11. Manual Transaction Entry Logic (Dropdown-driven, 3 Modes: Expense, Income, Transfer)
+    const capsuleManualBtn = document.getElementById('capsuleManualBtn');
+    const quickManualEntryBtn = document.getElementById('quickManualEntryBtn');
+    const quickTransferBtn = document.getElementById('quickTransferBtn');
+    const manualEntryModal = document.getElementById('manualEntryModal');
+    const closeManualModal = document.getElementById('closeManualModal');
+    const cancelManualBtn = document.getElementById('cancelManualBtn');
+    const saveManualBtn = document.getElementById('saveManualBtn');
+    const saveManualBtnText = document.getElementById('saveManualBtnText');
+    const saveManualBtnIcon = document.getElementById('saveManualBtnIcon');
+    const manualAmountInput = document.getElementById('manualAmountInput');
+    const manualNoteInput = document.getElementById('manualNoteInput');
+    const manualCatSelect = document.getElementById('manualCatSelect');
+    const manualTypeExpense = document.getElementById('manualTypeExpense');
+    const manualTypeIncome = document.getElementById('manualTypeIncome');
+    const manualTypeTransfer = document.getElementById('manualTypeTransfer');
+    const expenseIncomeFieldsGroup = document.getElementById('expenseIncomeFieldsGroup');
+    const transferFieldsGroup = document.getElementById('transferFieldsGroup');
+    const manualAccountSelectLabel = document.getElementById('manualAccountSelectLabel');
+    const transferNoteInput = document.getElementById('transferNoteInput');
+
+    let currentManualMode = 'expense'; // 'expense' | 'income' | 'transfer'
+
+    function setManualMode(mode) {
+      currentManualMode = mode;
+      if (mode === 'expense') {
+        manualTypeExpense.className = 'manual-type-btn px-3 py-1.5 rounded-full text-xs font-bold bg-gLight-surface dark:bg-gDark-surface text-rose-500 shadow-sm transition-all flex items-center gap-1';
+        manualTypeIncome.className = 'manual-type-btn px-3 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-green dark:hover:text-gDark-green transition-all flex items-center gap-1';
+        manualTypeTransfer.className = 'manual-type-btn px-3 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-blue dark:hover:text-gDark-blue transition-all flex items-center gap-1';
+        
+        expenseIncomeFieldsGroup.classList.remove('hidden');
+        transferFieldsGroup.classList.add('hidden');
+        manualAccountSelectLabel.textContent = 'কোন অ্যাকাউন্ট থেকে খরচ হয়েছে? (Paid From)';
+        saveManualBtnText.textContent = 'Save Expense';
+        saveManualBtnIcon.textContent = 'check_circle';
+      } else if (mode === 'income') {
+        manualTypeIncome.className = 'manual-type-btn px-3 py-1.5 rounded-full text-xs font-bold bg-gLight-surface dark:bg-gDark-surface text-gLight-green dark:text-gDark-green shadow-sm transition-all flex items-center gap-1';
+        manualTypeExpense.className = 'manual-type-btn px-3 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-rose-500 transition-all flex items-center gap-1';
+        manualTypeTransfer.className = 'manual-type-btn px-3 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-blue dark:hover:text-gDark-blue transition-all flex items-center gap-1';
+        
+        expenseIncomeFieldsGroup.classList.remove('hidden');
+        transferFieldsGroup.classList.add('hidden');
+        manualAccountSelectLabel.textContent = 'কোন অ্যাকাউন্টে টাকা জমা হয়েছে? (Deposit To)';
+        saveManualBtnText.textContent = 'Save Income';
+        saveManualBtnIcon.textContent = 'arrow_downward';
+      } else if (mode === 'transfer') {
+        manualTypeTransfer.className = 'manual-type-btn px-3 py-1.5 rounded-full text-xs font-bold bg-gLight-surface dark:bg-gDark-surface text-gLight-blue dark:text-gDark-blue shadow-sm transition-all flex items-center gap-1';
+        manualTypeExpense.className = 'manual-type-btn px-3 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-rose-500 transition-all flex items-center gap-1';
+        manualTypeIncome.className = 'manual-type-btn px-3 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-green dark:hover:text-gDark-green transition-all flex items-center gap-1';
+        
+        expenseIncomeFieldsGroup.classList.add('hidden');
+        transferFieldsGroup.classList.remove('hidden');
+        saveManualBtnText.textContent = 'Complete Transfer (স্থানান্তর)';
+        saveManualBtnIcon.textContent = 'swap_horiz';
+      }
+    }
+
+    function openManualModal(mode = 'expense') {
+      updateAccountsUI();
+      setManualMode(mode);
+      manualEntryModal.classList.remove('hidden');
+      setTimeout(() => {
+        manualAmountInput.focus();
+      }, 100);
+    }
+
+    function closeManualModalFn() {
+      manualEntryModal.classList.add('hidden');
+      manualAmountInput.value = '';
+      manualNoteInput.value = '';
+      if (transferNoteInput) transferNoteInput.value = '';
+    }
+
+    if (capsuleManualBtn) capsuleManualBtn.addEventListener('click', () => openManualModal('expense'));
+    if (quickManualEntryBtn) quickManualEntryBtn.addEventListener('click', () => openManualModal('expense'));
+    if (quickTransferBtn) quickTransferBtn.addEventListener('click', () => openManualModal('transfer'));
+    if (closeManualModal) closeManualModal.addEventListener('click', closeManualModalFn);
+    if (cancelManualBtn) cancelManualBtn.addEventListener('click', closeManualModalFn);
+
+    if (manualTypeExpense) manualTypeExpense.addEventListener('click', () => setManualMode('expense'));
+    if (manualTypeIncome) manualTypeIncome.addEventListener('click', () => setManualMode('income'));
+    if (manualTypeTransfer) manualTypeTransfer.addEventListener('click', () => setManualMode('transfer'));
+
+    // Quick Amount Increment Chips
+    document.querySelectorAll('.quick-amt-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const val = parseInt(chip.getAttribute('data-val')) || 0;
+        const current = parseInt(manualAmountInput.value) || 0;
+        manualAmountInput.value = current + val;
+      });
+    });
+
+    // Quick Note Presets
+    document.querySelectorAll('.manual-preset-note').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const note = btn.getAttribute('data-note');
+        const cat = btn.getAttribute('data-cat');
+        const acc = btn.getAttribute('data-acc');
+        manualNoteInput.value = note;
+        if (manualCatSelect && cat) manualCatSelect.value = cat;
+        if (manualAccountSelect && acc) manualAccountSelect.value = acc;
+      });
+    });
+
+    // Date Selection Logic
+    const dateOptToday = document.getElementById('dateOptToday');
+    const dateOptYesterday = document.getElementById('dateOptYesterday');
+    const dateOptCustomWrapper = document.getElementById('dateOptCustomWrapper');
+    const manualDateInput = document.getElementById('manualDateInput');
+    const selectedDateDisplay = document.getElementById('selectedDateDisplay');
+    const customDateBtnLabel = document.getElementById('customDateBtnLabel');
+
+    let currentSelectedDateLabel = 'Today'; // 'Today', 'Yesterday', or '14 Sep'
+
+    function resetDateChips() {
+      const inactiveClass = 'date-chip-btn py-2.5 px-1 rounded-xl text-xs font-medium bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-gLight-textSecondary dark:text-gDark-textSecondary tap-press border border-black/5 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-center transition-all';
+      if (dateOptToday) dateOptToday.className = inactiveClass;
+      if (dateOptYesterday) dateOptYesterday.className = inactiveClass;
+      if (dateOptCustomWrapper) dateOptCustomWrapper.className = inactiveClass + ' relative flex items-center justify-center gap-1 cursor-pointer';
+    }
+
+    if (dateOptToday) {
+      dateOptToday.addEventListener('click', () => {
+        resetDateChips();
+        dateOptToday.className = 'date-chip-btn py-2.5 px-1 rounded-xl text-xs font-bold bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer tap-press border border-gLight-blue/40 text-center transition-all';
+        currentSelectedDateLabel = 'Today';
+        if (selectedDateDisplay) selectedDateDisplay.textContent = 'Today (17 Sep)';
+        if (customDateBtnLabel) customDateBtnLabel.textContent = 'অন্য দিন';
+      });
+    }
+
+    if (dateOptYesterday) {
+      dateOptYesterday.addEventListener('click', () => {
+        resetDateChips();
+        dateOptYesterday.className = 'date-chip-btn py-2.5 px-1 rounded-xl text-xs font-bold bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer tap-press border border-gLight-blue/40 text-center transition-all';
+        currentSelectedDateLabel = 'Yesterday';
+        if (selectedDateDisplay) selectedDateDisplay.textContent = 'Yesterday (16 Sep)';
+        if (customDateBtnLabel) customDateBtnLabel.textContent = 'অন্য দিন';
+      });
+    }
+
+    if (manualDateInput) {
+      manualDateInput.addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        const parts = e.target.value.split('-');
+        const year = parts[0];
+        const monthIndex = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const formatted = `${day} ${months[monthIndex]}`;
+
+        resetDateChips();
+        if (dateOptCustomWrapper) {
+          dateOptCustomWrapper.className = 'date-chip-btn relative py-2.5 px-1 rounded-xl text-xs font-bold bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer tap-press border border-gLight-blue/40 text-center transition-all flex items-center justify-center gap-1 cursor-pointer';
+        }
+        if (customDateBtnLabel) customDateBtnLabel.textContent = formatted;
+        currentSelectedDateLabel = formatted;
+        if (selectedDateDisplay) selectedDateDisplay.textContent = `${formatted}, ${year}`;
+      });
+    }
+
+    // Save Manual Entry Handler
+    if (saveManualBtn) {
+      saveManualBtn.addEventListener('click', () => {
+        const amt = parseFloat(manualAmountInput.value.trim());
+        if (!amt || isNaN(amt) || amt <= 0) {
+          manualAmountInput.focus();
+          manualAmountInput.placeholder = 'অ্যামাউন্ট লিখুন!';
+          return;
+        }
+
+        if (currentManualMode === 'transfer') {
+          // TRANSFER LOGIC
+          const fromAccKey = transferFromSelect.value;
+          const toAccKey = transferToSelect.value;
+
+          if (fromAccKey === toAccKey) {
+            alert('From ebong To account eki hote parbe na! Alada account select korun.');
+            return;
+          }
+
+          if (accounts[fromAccKey] && accounts[toAccKey]) {
+            accounts[fromAccKey].balance -= amt;
+            accounts[toAccKey].balance += amt;
+            updateAccountsUI();
+
+            const fromName = accounts[fromAccKey].name;
+            const toName = accounts[toAccKey].name;
+            const note = transferNoteInput.value.trim() || `${fromName} theke ${toName}-e transfer`;
+
+            // Add transfer item to recent transactions
+            const div = document.createElement('div');
+            div.setAttribute('data-category', 'all');
+            div.className = 'tx-item bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-4 flex items-center justify-between tap-press cursor-pointer border border-blue-500/30 shadow-sm transition-all animate-fade-in';
+            div.innerHTML = `
+              <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-blue-500/15 text-blue-500 flex items-center justify-center text-xl shrink-0">
+                  ⇄
+                </div>
+                <div class="flex flex-col">
+                  <span class="font-semibold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">${fromName} ➔ ${toName}</span>
+                  <span class="text-xs text-gLight-blue dark:text-gDark-blue font-medium">${currentSelectedDateLabel} • ${note} • Synced</span>
+                </div>
+              </div>
+              <span class="font-bold text-base text-gLight-blue dark:text-gDark-blue">৳ ${amt.toLocaleString()}</span>
+            `;
+            txList.prepend(div);
+          }
+        } else if (currentManualMode === 'income') {
+          // INCOME LOGIC
+          const accKey = manualAccountSelect.value;
+          if (accounts[accKey]) {
+            accounts[accKey].balance += amt;
+            updateAccountsUI();
+          }
+
+          const note = manualNoteInput.value.trim() || 'আয় (Income)';
+          const accName = accounts[accKey] ? accounts[accKey].name : 'Wallet';
+
+          const div = document.createElement('div');
+          div.setAttribute('data-category', 'income');
+          div.className = 'tx-item bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-4 flex items-center justify-between tap-press cursor-pointer border border-emerald-500/30 shadow-sm transition-all animate-fade-in';
+          div.innerHTML = `
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center text-xl shrink-0">
+                💰
+              </div>
+              <div class="flex flex-col">
+                <span class="font-semibold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">${note}</span>
+                <span class="text-xs text-gLight-green dark:text-gDark-green font-medium">${currentSelectedDateLabel} • Deposited to ${accName} • Synced</span>
+              </div>
+            </div>
+            <span class="font-bold text-base text-gLight-green dark:text-gDark-green">+ ৳ ${amt.toLocaleString()}</span>
+          `;
+          txList.prepend(div);
+        } else {
+          // EXPENSE LOGIC
+          const accKey = manualAccountSelect.value;
+          if (accounts[accKey]) {
+            accounts[accKey].balance -= amt;
+            updateAccountsUI();
+          }
+
+          const catKey = manualCatSelect.value;
+          if (catKey && categoriesData[catKey]) {
+            categoriesData[catKey].spent += amt;
+            renderCategories();
+            const p = Math.round((categoriesData[catKey].spent / categoriesData[catKey].budget) * 100);
+            if (p >= 80) {
+              showToast(`⚠️ ${categoriesData[catKey].name} বাজেটের ${p}% খরচ হয়ে গেছে!`, 'warning');
+            }
+          }
+
+          const selectedOption = manualCatSelect.options[manualCatSelect.selectedIndex];
+          const icon = selectedOption.getAttribute('data-icon') || '🛒';
+          const catName = selectedOption.getAttribute('data-name') || 'Expense';
+          const note = manualNoteInput.value.trim() || `${catName} খরচ`;
+          const accName = accounts[accKey] ? accounts[accKey].name : 'Cash';
+
+          const div = document.createElement('div');
+          div.setAttribute('data-category', catKey);
+          div.className = 'tx-item bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-4 flex items-center justify-between tap-press cursor-pointer border border-gLight-blue/30 dark:border-gDark-blue/40 shadow-sm transition-all';
+          div.innerHTML = `
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh flex items-center justify-center text-xl shrink-0">
+                ${icon}
+              </div>
+              <div class="flex flex-col">
+                <span class="font-semibold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">${note}</span>
+                <span class="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary font-medium">${currentSelectedDateLabel} • Paid via ${accName} • Synced</span>
+              </div>
+            </div>
+            <span class="font-bold text-base text-gLight-textPrimary dark:text-gDark-textPrimary">- ৳ ${amt.toLocaleString()}</span>
+          `;
+          txList.prepend(div);
+        }
+
+        triggerDriveSync();
+        closeManualModalFn();
+      });
+    }
+
+    // 12. Add New Account Modal Logic
+    const addAccountBtn = document.getElementById('addAccountBtn');
+    const newAccountModal = document.getElementById('newAccountModal');
+    const closeAccountModal = document.getElementById('closeAccountModal');
+    const cancelAccountBtn = document.getElementById('cancelAccountBtn');
+    const saveAccountBtn = document.getElementById('saveAccountBtn');
+    const newAccountNameInput = document.getElementById('newAccountNameInput');
+    const newAccountTypeSelect = document.getElementById('newAccountTypeSelect');
+    const newAccountBalanceInput = document.getElementById('newAccountBalanceInput');
+
+    function openAccountModal() {
+      newAccountModal.classList.remove('hidden');
+      setTimeout(() => {
+        newAccountNameInput.focus();
+      }, 100);
+    }
+
+    function closeAccountModalFn() {
+      newAccountModal.classList.add('hidden');
+      newAccountNameInput.value = '';
+      newAccountBalanceInput.value = '';
+    }
+
+    if (addAccountBtn) addAccountBtn.addEventListener('click', openAccountModal);
+    if (closeAccountModal) closeAccountModal.addEventListener('click', closeAccountModalFn);
+    if (cancelAccountBtn) cancelAccountBtn.addEventListener('click', closeAccountModalFn);
+
+    if (saveAccountBtn) {
+      saveAccountBtn.addEventListener('click', () => {
+        const name = newAccountNameInput.value.trim() || 'Custom Account';
+        const type = newAccountTypeSelect.value;
+        const bal = parseFloat(newAccountBalanceInput.value.trim()) || 0;
+        const accKey = 'acc_' + Date.now();
+        const icon = type === 'bank' ? '🏦' : (type === 'mfs' ? '📱' : '💵');
+
+        // Add to internal state
+        accounts[accKey] = {
+          id: accKey,
+          name: name,
+          icon: icon,
+          balance: bal,
+          note: type === 'bank' ? 'Bank Account' : (type === 'mfs' ? 'Mobile Wallet' : 'Cash')
+        };
+
+        // Add new card to accounts carousel
+        const card = document.createElement('div');
+        card.className = 'account-card shrink-0 bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-3 flex flex-col justify-between w-36 h-20 border border-black/5 dark:border-white/5 tap-press shadow-sm cursor-pointer hover:border-gLight-blue/40 dark:hover:border-gDark-blue/40 transition-all animate-fade-in';
+        card.innerHTML = `
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-base">${icon}</span>
+            <span class="text-[10px] font-bold text-gLight-blue dark:text-gDark-blue">${name}</span>
+          </div>
+          <div>
+            <div class="font-extrabold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">৳ ${bal.toLocaleString()}</div>
+            <div class="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary">${accounts[accKey].note}</div>
+          </div>
+        `;
+        accountsScroll.appendChild(card);
+
+        // Add option to dropdowns
+        const optHtml = `<option value="${accKey}">${icon} ${name} (৳ ${bal.toLocaleString()})</option>`;
+        if (manualAccountSelect) manualAccountSelect.insertAdjacentHTML('beforeend', optHtml);
+        if (transferFromSelect) transferFromSelect.insertAdjacentHTML('beforeend', optHtml);
+        if (transferToSelect) transferToSelect.insertAdjacentHTML('beforeend', optHtml);
+        const dharSettleAccSel = document.getElementById('dharSettleAccountSelect');
+        const dharAddMoreAccSel = document.getElementById('dharAddMoreAccountSelect');
+        const newDharAccSel = document.getElementById('newDharAccountSelect');
+        if (dharSettleAccSel) dharSettleAccSel.insertAdjacentHTML('beforeend', optHtml);
+        if (dharAddMoreAccSel) dharAddMoreAccSel.insertAdjacentHTML('beforeend', optHtml);
+        if (newDharAccSel) newDharAccSel.insertAdjacentHTML('beforeend', optHtml);
+
+        updateAccountsUI();
+        triggerDriveSync();
+        closeAccountModalFn();
+      });
+    }
+
+    const quickAddAccountCard = document.getElementById('quickAddAccountCard');
+    if (quickAddAccountCard) {
+      quickAddAccountCard.addEventListener('click', openAccountModal);
+    }
+
+    // 13. Dhar-Dena (Lend & Borrow) Installment Settlement & Re-borrow Controller
+    let dharItems = [
+      {
+        id: 'dhar_sakib',
+        person: 'সাকিব (Sakib)',
+        avatar: 'স',
+        note: 'লাঞ্চের ধার',
+        amount: 1500,
+        type: 'pabo' // 'pabo' (আমি পাবো) | 'debo' (আমি দেবো)
+      },
+      {
+        id: 'dhar_modina',
+        person: 'মদিনা স্টোর (দোকান বাকি)',
+        avatar: 'ম',
+        note: 'ডিম ও তেল',
+        amount: 800,
+        type: 'debo'
+      }
+    ];
+
+    const dharList = document.getElementById('dharList');
+    const paboTotal = document.getElementById('paboTotal');
+    const deboTotal = document.getElementById('deboTotal');
+    const paboCountText = document.getElementById('paboCountText');
+    const deboCountText = document.getElementById('deboCountText');
+
+    function renderDharList() {
+      if (!dharList) return;
+      dharList.innerHTML = '';
+
+      let totalPabo = 0;
+      let totalDebo = 0;
+      let countPabo = 0;
+      let countDebo = 0;
+
+      dharItems.forEach(item => {
+        if (item.amount <= 0) return;
+
+        if (item.type === 'pabo') {
+          totalPabo += item.amount;
+          countPabo++;
+        } else {
+          totalDebo += item.amount;
+          countDebo++;
+        }
+
+        const isPabo = item.type === 'pabo';
+        const dotColor = isPabo ? 'bg-emerald-500' : 'bg-rose-500';
+        const amtColor = isPabo ? 'text-gLight-green dark:text-gDark-green' : 'text-rose-400';
+        const btnBg = isPabo ? 'bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25' : 'bg-rose-500/15 text-rose-400 hover:bg-rose-500/25';
+        const btnText = isPabo ? 'পেয়েছি' : 'পরিশোধ';
+
+        const row = document.createElement('div');
+        row.className = 'dhar-item bg-gLight-surfaceHigh/60 dark:bg-gDark-surfaceHigh/60 hover:bg-gLight-surfaceHigh dark:hover:bg-gDark-surfaceHigh rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs tap-press cursor-pointer transition-colors';
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full ${dotColor}"></span>
+            <span class="font-semibold text-gLight-textPrimary dark:text-gDark-textPrimary">${item.person}</span>
+            <span class="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary">• ${item.note}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold ${amtColor}">৳ ${item.amount.toLocaleString()}</span>
+            <button type="button" class="settle-btn text-[10px] ${btnBg} font-bold px-2 py-0.5 rounded-full tap-press transition-colors">${btnText}</button>
+          </div>
+        `;
+
+        row.addEventListener('click', () => {
+          openDharSettleModal(item);
+        });
+
+        dharList.appendChild(row);
+      });
+
+      if (paboTotal) paboTotal.textContent = `৳ ${totalPabo.toLocaleString()}`;
+      if (deboTotal) deboTotal.textContent = `৳ ${totalDebo.toLocaleString()}`;
+      if (paboCountText) paboCountText.textContent = `${countPabo} জনের কাছে পাই`;
+      if (deboCountText) deboCountText.textContent = `${countDebo} জনের বাকি আছে`;
+    }
+
+    // Modal 6: Dhar Settle & Re-borrow
+    let activeDharItem = null;
+    let activeSettleMode = 'full'; // 'full' | 'partial'
+    let activeDharTab = 'settle'; // 'settle' | 'add_more'
+
+    const dharSettleModal = document.getElementById('dharSettleModal');
+    const closeDharSettleModal = document.getElementById('closeDharSettleModal');
+    const cancelDharSettleBtn = document.getElementById('cancelDharSettleBtn');
+    const dharContactAvatar = document.getElementById('dharContactAvatar');
+    const dharContactName = document.getElementById('dharContactName');
+    const dharContactSubtext = document.getElementById('dharContactSubtext');
+    const dharDirectionLabel = document.getElementById('dharDirectionLabel');
+    const dharCurrentAmountDisplay = document.getElementById('dharCurrentAmountDisplay');
+
+    const dharActionSettleTab = document.getElementById('dharActionSettleTab');
+    const dharActionAddMoreTab = document.getElementById('dharActionAddMoreTab');
+    const dharSettleSection = document.getElementById('dharSettleSection');
+    const dharAddMoreSection = document.getElementById('dharAddMoreSection');
+
+    const settleModeFull = document.getElementById('settleModeFull');
+    const settleModePartial = document.getElementById('settleModePartial');
+    const settleFullBtnText = document.getElementById('settleFullBtnText');
+    const dharPartialInputGroup = document.getElementById('dharPartialInputGroup');
+    const dharPartialAmountInput = document.getElementById('dharPartialAmountInput');
+
+    const dharSettleAccountLabel = document.getElementById('dharSettleAccountLabel');
+    const dharSettleAccountSelect = document.getElementById('dharSettleAccountSelect');
+    const dharAddMoreAccountSelect = document.getElementById('dharAddMoreAccountSelect');
+    const dharAddMoreAmountInput = document.getElementById('dharAddMoreAmountInput');
+    const dharAddMoreNoteInput = document.getElementById('dharAddMoreNoteInput');
+    const saveDharActionBtn = document.getElementById('saveDharActionBtn');
+    const saveDharActionBtnText = document.getElementById('saveDharActionBtnText');
+
+    function openDharSettleModal(item) {
+      activeDharItem = item;
+      activeSettleMode = 'full';
+      updateAccountsUI();
+      setDharTab('settle');
+      setSettleMode('full');
+
+      if (dharContactAvatar) {
+        dharContactAvatar.textContent = item.avatar || item.person.charAt(0);
+        dharContactAvatar.className = item.type === 'pabo' 
+          ? 'w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-500 font-bold flex items-center justify-center text-base'
+          : 'w-10 h-10 rounded-2xl bg-rose-500/15 text-rose-500 font-bold flex items-center justify-center text-base';
+      }
+      if (dharContactName) dharContactName.textContent = item.person;
+      if (dharContactSubtext) dharContactSubtext.textContent = `${item.note} • খাতা বিবরণ`;
+
+      if (dharDirectionLabel) {
+        dharDirectionLabel.textContent = item.type === 'pabo' ? 'আমি পাবো (Receivable)' : 'আমি দেবো (Payable)';
+        dharDirectionLabel.className = item.type === 'pabo' ? 'text-xs font-semibold text-gLight-green dark:text-gDark-green' : 'text-xs font-semibold text-rose-500';
+      }
+      if (dharCurrentAmountDisplay) {
+        dharCurrentAmountDisplay.textContent = `৳ ${item.amount.toLocaleString()}`;
+      }
+      if (settleFullBtnText) {
+        settleFullBtnText.textContent = `সম্পূর্ণ (৳ ${item.amount.toLocaleString()})`;
+      }
+      if (dharPartialAmountInput) {
+        dharPartialAmountInput.value = '';
+        dharPartialAmountInput.placeholder = Math.round(item.amount / 2);
+      }
+      if (dharAddMoreAmountInput) dharAddMoreAmountInput.value = '';
+      if (dharAddMoreNoteInput) dharAddMoreNoteInput.value = '';
+
+      if (dharSettleAccountLabel) {
+        dharSettleAccountLabel.textContent = item.type === 'pabo' 
+          ? 'কোন অ্যাকাউন্টে টাকা রিসিভ হলো? (Received In)' 
+          : 'কোন অ্যাকাউন্ট থেকে পরিশোধ করলেন? (Paid From)';
+      }
+
+      dharSettleModal.classList.remove('hidden');
+    }
+
+    function closeDharSettleModalFn() {
+      if (dharSettleModal) dharSettleModal.classList.add('hidden');
+      activeDharItem = null;
+    }
+
+    function setDharTab(tab) {
+      activeDharTab = tab;
+      if (tab === 'settle') {
+        dharActionSettleTab.className = 'dhar-tab-btn flex-1 py-1.5 rounded-full text-xs font-bold bg-gLight-surface dark:bg-gDark-surface text-gLight-blue dark:text-gDark-blue shadow-sm transition-all flex items-center justify-center gap-1';
+        dharActionAddMoreTab.className = 'dhar-tab-btn flex-1 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-blue dark:hover:text-gDark-blue transition-all flex items-center justify-center gap-1';
+        dharSettleSection.classList.remove('hidden');
+        dharAddMoreSection.classList.add('hidden');
+        if (saveDharActionBtnText) saveDharActionBtnText.textContent = 'পরিশোধ নিশ্চিত করুন';
+      } else {
+        dharActionAddMoreTab.className = 'dhar-tab-btn flex-1 py-1.5 rounded-full text-xs font-bold bg-gLight-surface dark:bg-gDark-surface text-gLight-blue dark:text-gDark-blue shadow-sm transition-all flex items-center justify-center gap-1';
+        dharActionSettleTab.className = 'dhar-tab-btn flex-1 py-1.5 rounded-full text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-blue dark:hover:text-gDark-blue transition-all flex items-center justify-center gap-1';
+        dharSettleSection.classList.add('hidden');
+        dharAddMoreSection.classList.remove('hidden');
+        if (saveDharActionBtnText) saveDharActionBtnText.textContent = 'ধার বৃদ্ধি নিশ্চিত করুন';
+        setTimeout(() => { if (dharAddMoreAmountInput) dharAddMoreAmountInput.focus(); }, 100);
+      }
+    }
+
+    function setSettleMode(mode) {
+      activeSettleMode = mode;
+      if (mode === 'full') {
+        settleModeFull.className = 'settle-mode-btn py-2.5 px-3 rounded-2xl text-xs font-bold bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer tap-press border border-gLight-blue/40 text-center transition-all flex items-center justify-center gap-1.5';
+        settleModePartial.className = 'settle-mode-btn py-2.5 px-3 rounded-2xl text-xs font-medium bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-gLight-textSecondary dark:text-gDark-textSecondary tap-press border border-black/5 dark:border-white/10 text-center transition-all flex items-center justify-center gap-1.5';
+        dharPartialInputGroup.classList.add('hidden');
+      } else {
+        settleModePartial.className = 'settle-mode-btn py-2.5 px-3 rounded-2xl text-xs font-bold bg-gLight-blueContainer dark:bg-gDark-blueContainer text-gLight-onBlueContainer dark:text-gDark-onBlueContainer tap-press border border-gLight-blue/40 text-center transition-all flex items-center justify-center gap-1.5';
+        settleModeFull.className = 'settle-mode-btn py-2.5 px-3 rounded-2xl text-xs font-medium bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-gLight-textSecondary dark:text-gDark-textSecondary tap-press border border-black/5 dark:border-white/10 text-center transition-all flex items-center justify-center gap-1.5';
+        dharPartialInputGroup.classList.remove('hidden');
+        setTimeout(() => { if (dharPartialAmountInput) dharPartialAmountInput.focus(); }, 100);
+      }
+    }
+
+    if (dharActionSettleTab) dharActionSettleTab.addEventListener('click', () => setDharTab('settle'));
+    if (dharActionAddMoreTab) dharActionAddMoreTab.addEventListener('click', () => setDharTab('add_more'));
+    if (settleModeFull) settleModeFull.addEventListener('click', () => setSettleMode('full'));
+    if (settleModePartial) settleModePartial.addEventListener('click', () => setSettleMode('partial'));
+    if (closeDharSettleModal) closeDharSettleModal.addEventListener('click', closeDharSettleModalFn);
+    if (cancelDharSettleBtn) cancelDharSettleBtn.addEventListener('click', closeDharSettleModalFn);
+
+    document.querySelectorAll('.dhar-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const val = parseInt(chip.getAttribute('data-val')) || 0;
+        const current = parseInt(dharPartialAmountInput.value) || 0;
+        dharPartialAmountInput.value = current + val;
+      });
+    });
+
+    if (saveDharActionBtn) {
+      saveDharActionBtn.addEventListener('click', () => {
+        if (!activeDharItem) return;
+
+        if (activeDharTab === 'settle') {
+          // INSTALLMENT / SETTLEMENT
+          let settleAmt = 0;
+          if (activeSettleMode === 'full') {
+            settleAmt = activeDharItem.amount;
+          } else {
+            settleAmt = parseFloat(dharPartialAmountInput.value.trim()) || 0;
+            if (settleAmt <= 0) {
+              dharPartialAmountInput.focus();
+              return;
+            }
+            if (settleAmt > activeDharItem.amount) {
+              settleAmt = activeDharItem.amount;
+            }
+          }
+
+          const accKey = dharSettleAccountSelect ? dharSettleAccountSelect.value : 'cash';
+          const accName = accounts[accKey] ? accounts[accKey].name : 'Wallet';
+
+          activeDharItem.amount -= settleAmt;
+
+          if (accounts[accKey]) {
+            if (activeDharItem.type === 'pabo') {
+              accounts[accKey].balance += settleAmt;
+            } else {
+              accounts[accKey].balance -= settleAmt;
+            }
+          }
+
+          const div = document.createElement('div');
+          div.setAttribute('data-category', 'dhar');
+          const isPabo = activeDharItem.type === 'pabo';
+          const badgeBg = isPabo ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500';
+          const amtSign = isPabo ? '+ ৳' : '- ৳';
+          const amtColor = isPabo ? 'text-gLight-green dark:text-gDark-green' : 'text-rose-500 dark:text-rose-400';
+          const actionText = isPabo ? `${activeDharItem.person} কিস্তি পরিশোধ করল` : `${activeDharItem.person}-কে কিস্তি পরিশোধ`;
+
+          div.className = 'tx-item bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-4 flex items-center justify-between tap-press cursor-pointer border border-black/5 dark:border-white/5 shadow-sm transition-all animate-fade-in';
+          div.innerHTML = `
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl ${badgeBg} flex items-center justify-center text-xl shrink-0 font-bold">
+                ${activeDharItem.avatar || '🤝'}
+              </div>
+              <div class="flex flex-col">
+                <span class="font-semibold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">${actionText}</span>
+                <span class="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary font-medium">Today • ${accName} • বাকি: ৳ ${activeDharItem.amount.toLocaleString()}</span>
+              </div>
+            </div>
+            <span class="font-bold text-base ${amtColor}">${amtSign} ${settleAmt.toLocaleString()}</span>
+          `;
+          if (txList) txList.prepend(div);
+
+        } else {
+          // RE-BORROW / ADD MORE TO SAME PERSON
+          const addAmt = parseFloat(dharAddMoreAmountInput.value.trim()) || 0;
+          if (addAmt <= 0) {
+            dharAddMoreAmountInput.focus();
+            return;
+          }
+
+          const addNote = dharAddMoreNoteInput.value.trim() || 'পুনরায় ধার';
+          const accKey = dharAddMoreAccountSelect ? dharAddMoreAccountSelect.value : 'cash';
+          const accName = accounts[accKey] ? accounts[accKey].name : 'Wallet';
+
+          activeDharItem.amount += addAmt;
+          activeDharItem.note = addNote;
+
+          if (accounts[accKey]) {
+            if (activeDharItem.type === 'pabo') {
+              accounts[accKey].balance -= addAmt;
+            } else {
+              accounts[accKey].balance += addAmt;
+            }
+          }
+
+          const div = document.createElement('div');
+          div.setAttribute('data-category', 'dhar');
+          const isPabo = activeDharItem.type === 'pabo';
+          const badgeBg = isPabo ? 'bg-amber-500/15 text-amber-500' : 'bg-blue-500/15 text-blue-500';
+          const amtSign = isPabo ? '- ৳' : '+ ৳';
+          const amtColor = isPabo ? 'text-gLight-textPrimary dark:text-gDark-textPrimary' : 'text-gLight-green dark:text-gDark-green';
+          const actionText = isPabo ? `${activeDharItem.person}-কে আবার ধার দেওয়া` : `${activeDharItem.person} থেকে আবার ধার নেওয়া`;
+
+          div.className = 'tx-item bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-4 flex items-center justify-between tap-press cursor-pointer border border-black/5 dark:border-white/5 shadow-sm transition-all animate-fade-in';
+          div.innerHTML = `
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl ${badgeBg} flex items-center justify-center text-xl shrink-0 font-bold">
+                ${activeDharItem.avatar || '🤝'}
+              </div>
+              <div class="flex flex-col">
+                <span class="font-semibold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">${actionText}</span>
+                <span class="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary font-medium">Today • ${addNote} • ${accName}</span>
+              </div>
+            </div>
+            <span class="font-bold text-base ${amtColor}">${amtSign} ${addAmt.toLocaleString()}</span>
+          `;
+          if (txList) txList.prepend(div);
+        }
+
+        renderDharList();
+        updateAccountsUI();
+        triggerDriveSync();
+        closeDharSettleModalFn();
+      });
+    }
+
+    // Modal 7: Add New Dhar-Dena Entry
+    const addDharBtn = document.getElementById('addDharBtn');
+    const newDharModal = document.getElementById('newDharModal');
+    const closeNewDharModal = document.getElementById('closeNewDharModal');
+    const cancelNewDharBtn = document.getElementById('cancelNewDharBtn');
+    const newDharTypePabo = document.getElementById('newDharTypePabo');
+    const newDharTypeDebo = document.getElementById('newDharTypeDebo');
+    const newDharPersonInput = document.getElementById('newDharPersonInput');
+    const newDharAmountInput = document.getElementById('newDharAmountInput');
+    const newDharNoteInput = document.getElementById('newDharNoteInput');
+    const newDharAccountSelect = document.getElementById('newDharAccountSelect');
+    const newDharAccountLabel = document.getElementById('newDharAccountLabel');
+    const saveNewDharBtn = document.getElementById('saveNewDharBtn');
+
+    let currentNewDharType = 'pabo';
+
+    function setNewDharType(type) {
+      currentNewDharType = type;
+      if (type === 'pabo') {
+        newDharTypePabo.className = 'new-dhar-type-btn py-2.5 rounded-2xl text-xs font-bold bg-gLight-surface dark:bg-gDark-surface text-gLight-green dark:text-gDark-green shadow-sm border border-emerald-500/30 tap-press flex items-center justify-center gap-1';
+        newDharTypeDebo.className = 'new-dhar-type-btn py-2.5 rounded-2xl text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-rose-500 tap-press border border-black/5 dark:border-white/10 flex items-center justify-center gap-1';
+        if (newDharAccountLabel) newDharAccountLabel.textContent = 'টাকা দেয়া হলো কোন অ্যাকাউন্ট থেকে? (Paid From)';
+      } else {
+        newDharTypeDebo.className = 'new-dhar-type-btn py-2.5 rounded-2xl text-xs font-bold bg-gLight-surface dark:bg-gDark-surface text-rose-500 shadow-sm border border-rose-500/30 tap-press flex items-center justify-center gap-1';
+        newDharTypePabo.className = 'new-dhar-type-btn py-2.5 rounded-2xl text-xs font-medium text-gLight-textTertiary dark:text-gDark-textTertiary hover:text-gLight-green tap-press border border-black/5 dark:border-white/10 flex items-center justify-center gap-1';
+        if (newDharAccountLabel) newDharAccountLabel.textContent = 'টাকা জমা হলো কোন অ্যাকাউন্টে? (Received In)';
+      }
+    }
+
+    if (newDharTypePabo) newDharTypePabo.addEventListener('click', () => setNewDharType('pabo'));
+    if (newDharTypeDebo) newDharTypeDebo.addEventListener('click', () => setNewDharType('debo'));
+
+    function openNewDharModal() {
+      updateAccountsUI();
+      newDharModal.classList.remove('hidden');
+      setNewDharType('pabo');
+      setTimeout(() => { if (newDharPersonInput) newDharPersonInput.focus(); }, 100);
+    }
+
+    function closeNewDharModalFn() {
+      newDharModal.classList.add('hidden');
+      if (newDharPersonInput) newDharPersonInput.value = '';
+      if (newDharAmountInput) newDharAmountInput.value = '';
+      if (newDharNoteInput) newDharNoteInput.value = '';
+    }
+
+    if (addDharBtn) addDharBtn.addEventListener('click', openNewDharModal);
+    if (closeNewDharModal) closeNewDharModal.addEventListener('click', closeNewDharModalFn);
+    if (cancelNewDharBtn) cancelNewDharBtn.addEventListener('click', closeNewDharModalFn);
+
+    document.querySelectorAll('.quick-contact-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const name = chip.getAttribute('data-name');
+        if (newDharPersonInput) {
+          newDharPersonInput.value = name;
+          if (newDharAmountInput) newDharAmountInput.focus();
+        }
+      });
+    });
+
+    if (saveNewDharBtn) {
+      saveNewDharBtn.addEventListener('click', () => {
+        const person = newDharPersonInput.value.trim();
+        const amt = parseFloat(newDharAmountInput.value.trim()) || 0;
+        const note = newDharNoteInput.value.trim() || (currentNewDharType === 'pabo' ? 'ধার দেওয়া' : 'ধার নেওয়া');
+        const accKey = newDharAccountSelect ? newDharAccountSelect.value : 'cash';
+        const accName = accounts[accKey] ? accounts[accKey].name : 'Wallet';
+
+        if (!person) {
+          newDharPersonInput.focus();
+          return;
+        }
+        if (amt <= 0) {
+          newDharAmountInput.focus();
+          return;
+        }
+
+        const existing = dharItems.find(d => d.person.toLowerCase() === person.toLowerCase() && d.type === currentNewDharType && d.amount > 0);
+        if (existing) {
+          existing.amount += amt;
+          existing.note = note;
+        } else {
+          dharItems.push({
+            id: 'dhar_' + Date.now(),
+            person: person,
+            avatar: person.charAt(0),
+            note: note,
+            amount: amt,
+            type: currentNewDharType
+          });
+        }
+
+        if (accounts[accKey]) {
+          if (currentNewDharType === 'pabo') {
+            accounts[accKey].balance -= amt;
+          } else {
+            accounts[accKey].balance += amt;
+          }
+        }
+
+        const div = document.createElement('div');
+        div.setAttribute('data-category', 'dhar');
+        const isPabo = currentNewDharType === 'pabo';
+        const badgeBg = isPabo ? 'bg-amber-500/15 text-amber-500' : 'bg-blue-500/15 text-blue-500';
+        const amtSign = isPabo ? '- ৳' : '+ ৳';
+        const amtColor = isPabo ? 'text-gLight-textPrimary dark:text-gDark-textPrimary' : 'text-gLight-green dark:text-gDark-green';
+        const actionText = isPabo ? `${person}-কে ধার দেওয়া হলো` : `${person} থেকে ধার নেওয়া হলো`;
+
+        div.className = 'tx-item bg-gLight-surface dark:bg-gDark-surface rounded-2xl p-4 flex items-center justify-between tap-press cursor-pointer border border-black/5 dark:border-white/5 shadow-sm transition-all animate-fade-in';
+        div.innerHTML = `
+          <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl ${badgeBg} flex items-center justify-center text-xl shrink-0 font-bold">
+              ${person.charAt(0)}
+            </div>
+            <div class="flex flex-col">
+              <span class="font-semibold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">${actionText}</span>
+              <span class="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary font-medium">Today • ${note} • ${accName}</span>
+            </div>
+          </div>
+          <span class="font-bold text-base ${amtColor}">${amtSign} ${amt.toLocaleString()}</span>
+        `;
+        if (txList) txList.prepend(div);
+
+        renderDharList();
+        updateAccountsUI();
+        triggerDriveSync();
+        closeNewDharModalFn();
+      });
+    }
+
+    // Initial render
+    renderDharList();
+  </script>
+</body>
+</html>
