@@ -64,9 +64,18 @@ Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata
 - [x] **iOS Safari Lifecycle Management**: Instantiates a fresh `SpeechRecognition` object per session to avoid WebKit `InvalidStateError` when restarting listening.
 - [x] **User-Friendly Error Translation**: Catches `no-speech`, `not-allowed`, and `network` events with natural Bangla prompts.
 
+### Phase 9: Dynamic AI Financial Advisor
+- [x] **Real Calendar Month Math**: Replaced hardcoded '13 days remaining' with live calculation of calendar days left in the current month (`daysInMonth - currentDay`).
+- [x] **Dual AI/Rule Architecture**: Evaluates financial queries using Gemini 2.0 Flash when an API key is present, with automatic fallback to high-precision offline spending allowance math.
+- [x] **Interactive Query Input**: Added direct query input field inside the AI Advisor modal allowing users to ask arbitrary purchase viability questions.
+
+### Phase 10: MFS & Banking Transaction SMS Parser
+- [x] **Native bKash & Nagad SMS Recognition**: Users can copy-paste real transaction SMS messages (e.g. `Payment Tk 350.00 to ...`, `Cash Out Tk 1,000`, `Cash In of Tk 2,500`, `TxnID`, `TrxID`).
+- [x] **Safe Extraction**: Isolates actual spent amount without mistaking Fee, Balance, or phone numbers for the primary transaction value.
+
 ---
 
-## 3. Automated Test Suite Status (27 Tests Passing)
+## 3. Automated Test Suite Status (33 Tests Passing)
 ```
 ✔ reconciles same account expense adjustment (increasing amount)
 ✔ reconciles same account expense adjustment (decreasing amount)
@@ -95,7 +104,13 @@ Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata
 ✔ detects Dhar Pabo and cleans recipient name suffix
 ✔ detects Dhar Debo and clean store name
 ✔ parses decimal amount correctly
-Total: 27 passed, 0 failed (Execution: ~95ms).
+✔ parses standard bKash payment SMS correctly
+✔ parses bKash received money SMS as income correctly
+✔ parses bKash Cash Out SMS correctly
+✔ parses Nagad payment SMS correctly
+✔ parses Nagad Cash In SMS as income correctly
+✔ parses Bank Card SMS correctly
+Total: 33 passed, 0 failed (Execution: ~104ms).
 ```
 
 ---
@@ -103,4 +118,4 @@ Total: 27 passed, 0 failed (Execution: ~95ms).
 ## 4. Production Deployment Status
 - **Git Repo:** `https://github.com/Shajnin-Aishy-Haque/hishab-ai`
 - **Cloudflare Pages Production:** `https://hishab-ai.pages.dev`
-- **Current Release:** v2.0.0 Stable
+- **Current Release:** v2.0.0 Stable (Commit verified & deployed)

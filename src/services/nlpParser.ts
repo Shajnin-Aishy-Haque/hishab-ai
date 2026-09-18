@@ -46,7 +46,101 @@ export const CATEGORY_MAP: Record<string, string[]> = {
   ]
 };
 
+export function parseTransactionalSMS(rawInput: string): ParsedExpense | null {
+  const normalized = normalizeBanglaDigits(rawInput.trim());
+  const lower = normalized.toLowerCase();
+
+  // Check if text looks like a banking/MFS SMS
+  const isSMS =
+    /(?:trxid|txnid|transaction id|cash in|cash out|send money|payment tk|received tk|debited for|credited for|card.*charged)/i.test(
+      lower
+    );
+
+  if (!isSMS) return null;
+
+  // 1. Detect Account
+  let accountId = 'bkash';
+  if (/nagad|নগদ|txnid/i.test(lower)) accountId = 'nagad';
+  else if (/acct|card|bank|ebl|brac|city|scb|ব্যাংক|কার্ড/i.test(lower)) accountId = 'bank';
+  else if (/bkash|বিকাশ|trxid/i.test(lower)) accountId = 'bkash';
+
+  // 2. Detect Type (Income vs Expense)
+  let type: 'income' | 'expense' = 'expense';
+  if (/received tk|cash in of|credited for|deposit/i.test(lower)) {
+    type = 'income';
+  }
+
+  // 3. Extract exact transaction amount (avoid fee or remaining balance)
+  let amount = 0;
+  const amountMatch = normalized.match(
+    /(?:payment|received|cash out|cash in|send money|recharge|debited for|credited for|charged)\s+(?:of\s+)?(?:tk\.?|bdt|৳)?\s*([0-9,]+(?:\.[0-9]{1,2})?)/i
+  );
+
+  if (amountMatch) {
+    const rawVal = amountMatch[1].replace(/,/g, '');
+    const num = parseFloat(rawVal);
+    if (!isNaN(num) && num > 0) amount = num;
+  }
+
+  if (amount <= 0) {
+    const fallbackMatch = normalized.match(/(?:tk\.?|bdt|৳)\s*([0-9,]+(?:\.[0-9]{1,2})?)/i);
+    if (fallbackMatch) {
+      const num = parseFloat(fallbackMatch[1].replace(/,/g, ''));
+      if (!isNaN(num) && num > 0) amount = num;
+    }
+  }
+
+  if (amount <= 0) return null;
+
+  // 4. Extract counterparty or reference
+  const brand = accountId === 'bkash' ? 'bKash' : accountId === 'nagad' ? 'Nagad' : 'Bank';
+  let action = type === 'income' ? 'Received' : 'Payment';
+  if (/cash out/i.test(lower)) action = 'Cash Out';
+  else if (/send money/i.test(lower)) action = 'Send Money';
+  else if (/recharge/i.test(lower)) action = 'Mobile Recharge';
+
+  let note = `${brand} ${action}`;
+
+  const recipientMatch = normalized.match(/(?:to|from)\s+([0-9A-Za-z\s]+?)(?:\s+successful|\s+ref|\.|\,)/i);
+  if (recipientMatch) {
+    const recipient = recipientMatch[1].trim();
+    if (recipient.length > 2 && recipient.length < 30) {
+      note += ` (${recipient})`;
+    }
+  }
+
+  const refMatch = normalized.match(/ref\s+([A-Za-z0-9\s]+?)(?:\.|\,)/i);
+  if (refMatch) {
+    const ref = refMatch[1].trim();
+    if (ref.length > 1 && ref.length < 20) {
+      note += ` - ${ref}`;
+    }
+  }
+
+  // 5. Category detection
+  let categoryId = type === 'income' ? 'personal' : 'bazaar';
+  if (/recharge|flexi/i.test(lower)) categoryId = 'bills';
+  else if (/food|restaurant|dine|cafe/i.test(lower)) categoryId = 'food';
+  else if (/uber|pathao/i.test(lower)) categoryId = 'transport';
+  else if (/pharma|hospital|clinic/i.test(lower)) categoryId = 'medical';
+  else if (/daraz|aarong|apex|bata/i.test(lower)) categoryId = 'shopping';
+
+  return {
+    amount,
+    note,
+    categoryId,
+    accountId,
+    type,
+    rawText: rawInput,
+    confidence: 0.98
+  };
+}
+
 export function parseNaturalInput(rawInput: string): ParsedExpense {
+  // Check if input is a transactional SMS first
+  const smsResult = parseTransactionalSMS(rawInput);
+  if (smsResult) return smsResult;
+
   const normalized = normalizeBanglaDigits(rawInput.trim());
   const lower = normalized.toLowerCase();
 

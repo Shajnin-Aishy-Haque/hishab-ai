@@ -28,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="flex flex-col">
           <span className="font-bold text-base tracking-tight text-gLight-textPrimary dark:text-gDark-textPrimary">
-            Hishab
+            Hishab AI
           </span>
           {/* Google Drive Status Pill */}
           <div
