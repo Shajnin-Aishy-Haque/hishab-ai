@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, initializeUserData, DEFAULT_USER, resetUserDataToScratch, updateStartingBalances } from './db/db';
-import type { Account, Category, DharItem, Transaction, UserProfile, TransactionType, DharType } from './types';
+import type { Account, Category, DharItem, Transaction, UserProfile, TransactionType, DharType, DharPaymentLog } from './types';
 import type { ParsedExpense } from './services/nlpParser';
 import type { ScanReceiptResult } from './services/geminiVision';
 import {
@@ -464,20 +464,48 @@ export function App() {
     if (!item) return;
 
     const remaining = Math.max(0, item.amount - settleAmount);
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    await db.transaction('rw', [db.dharItems, db.accounts], async () => {
+    const newLog: DharPaymentLog = {
+      id: `pay_${Date.now()}`,
+      amount: settleAmount,
+      date: today,
+      time: timeStr,
+      timestamp: Date.now(),
+      accountId,
+      type: 'repayment'
+    };
+
+    await db.transaction('rw', [db.dharItems, db.accounts, db.transactions], async () => {
       await db.dharItems.update(id, {
         amount: remaining,
-        status: remaining === 0 ? 'settled' : 'pending'
+        status: remaining === 0 ? 'settled' : 'pending',
+        history: [...(item.history || []), newLog]
       });
 
       const acc = accounts.find((a) => a.id === accountId);
       if (acc) {
-        // If Pabo: someone paid me -> income into my wallet (+settleAmount)
-        // If Debo: I paid them -> expense from my wallet (-settleAmount)
+        // If Pabo: someone paid me back -> income into wallet (+settleAmount)
+        // If Debo: I paid them back -> expense from wallet (-settleAmount)
         const delta = item.type === 'pabo' ? settleAmount : -settleAmount;
         await db.accounts.update(accountId, { balance: acc.balance + delta });
       }
+
+      // Record matching transaction in transaction feed
+      await db.transactions.add({
+        userId: currentUser.id,
+        type: item.type === 'pabo' ? 'income' : 'expense',
+        amount: settleAmount,
+        note: item.type === 'pabo' ? `${item.person} - ধার পরিশোধ আদায়` : `${item.person} - ঋণ পরিশোধ`,
+        categoryId: 'personal',
+        accountId,
+        date: today,
+        time: timeStr,
+        timestamp: Date.now(),
+        icon: item.type === 'pabo' ? 'call_received' : 'call_made'
+      });
     });
 
     showToast(`৳${settleAmount} সফলভাবে পরিশোধ সম্পন্ন হয়েছে!`, 'verified');
@@ -487,20 +515,50 @@ export function App() {
     const item = dharItems.find((d) => d.id === id);
     if (!item) return;
 
-    await db.transaction('rw', [db.dharItems, db.accounts], async () => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const newLog: DharPaymentLog = {
+      id: `add_${Date.now()}`,
+      amount: addAmount,
+      date: today,
+      time: timeStr,
+      timestamp: Date.now(),
+      accountId,
+      note,
+      type: 'add_loan'
+    };
+
+    await db.transaction('rw', [db.dharItems, db.accounts, db.transactions], async () => {
       await db.dharItems.update(id, {
         amount: item.amount + addAmount,
+        originalAmount: item.originalAmount + addAmount,
         note: note ? `${item.note}, ${note}` : item.note,
-        status: 'pending'
+        status: 'pending',
+        history: [...(item.history || []), newLog]
       });
 
       const acc = accounts.find((a) => a.id === accountId);
       if (acc) {
-        // If Pabo: lent more money out (-addAmount)
-        // If Debo: borrowed more money in (+addAmount)
+        // If Pabo: gave more loan money out (-addAmount)
+        // If Debo: borrowed more loan money in (+addAmount)
         const delta = item.type === 'pabo' ? -addAmount : addAmount;
         await db.accounts.update(accountId, { balance: acc.balance + delta });
       }
+
+      await db.transactions.add({
+        userId: currentUser.id,
+        type: item.type === 'pabo' ? 'expense' : 'income',
+        amount: addAmount,
+        note: item.type === 'pabo' ? `${item.person} - অতিরিক্ত ধার প্রদান` : `${item.person} - অতিরিক্ত ঋণ গ্রহণ`,
+        categoryId: 'personal',
+        accountId,
+        date: today,
+        time: timeStr,
+        timestamp: Date.now(),
+        icon: item.type === 'pabo' ? 'call_made' : 'call_received'
+      });
     });
 
     showToast(`৳${addAmount} ধার বৃদ্ধি করা হয়েছে!`, 'check_circle');
@@ -514,9 +572,22 @@ export function App() {
     note: string;
     accountId: string;
   }) => {
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    await db.transaction('rw', [db.dharItems, db.accounts], async () => {
+    const initialLog: DharPaymentLog = {
+      id: `init_${Date.now()}`,
+      amount: data.amount,
+      date: today,
+      time: timeStr,
+      timestamp: Date.now(),
+      accountId: data.accountId,
+      note: data.note,
+      type: 'add_loan'
+    };
+
+    await db.transaction('rw', [db.dharItems, db.accounts, db.transactions], async () => {
       await db.dharItems.add({
         userId: currentUser.id,
         person: data.person,
@@ -526,7 +597,8 @@ export function App() {
         note: data.note,
         date: today,
         timestamp: Date.now(),
-        status: 'pending'
+        status: 'pending',
+        history: [initialLog]
       });
 
       const acc = accounts.find((a) => a.id === data.accountId);
@@ -536,9 +608,27 @@ export function App() {
         const delta = data.type === 'pabo' ? -data.amount : data.amount;
         await db.accounts.update(data.accountId, { balance: acc.balance + delta });
       }
+
+      await db.transactions.add({
+        userId: currentUser.id,
+        type: data.type === 'pabo' ? 'expense' : 'income',
+        amount: data.amount,
+        note: data.type === 'pabo' ? `${data.person} - ধার প্রদান` : `${data.person} - ঋণ গ্রহণ`,
+        categoryId: 'personal',
+        accountId: data.accountId,
+        date: today,
+        time: timeStr,
+        timestamp: Date.now(),
+        icon: data.type === 'pabo' ? 'handshake' : 'attach_money'
+      });
     });
 
     showToast(`নতুন খাতা এন্ট্রি যুক্ত হয়েছে (${data.person})`, 'menu_book');
+  };
+
+  const handleDeleteDhar = async (id: number) => {
+    await db.dharItems.delete(id);
+    showToast('ধার খাতা এন্ট্রি মুছে ফেলা হয়েছে।', 'delete');
   };
 
   // Add new category
@@ -687,6 +777,7 @@ export function App() {
               setSettlingDharItem(item);
               setIsSettleModalOpen(true);
             }}
+            onDeleteDhar={handleDeleteDhar}
           />
         )}
 

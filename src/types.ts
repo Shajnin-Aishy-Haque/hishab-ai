@@ -50,6 +50,18 @@ export interface Category {
 
 export type DharType = 'pabo' | 'debo'; // pabo = receivable, debo = payable
 
+export interface DharPaymentLog {
+  id: string;
+  amount: number;
+  date: string;
+  time: string;
+  timestamp: number;
+  accountId: string;
+  accountName?: string;
+  note?: string;
+  type: 'repayment' | 'add_loan';
+}
+
 export interface DharItem {
   id?: number;
   userId: string;
@@ -62,6 +74,7 @@ export interface DharItem {
   timestamp: number;
   status: 'pending' | 'settled';
   phone?: string;
+  history?: DharPaymentLog[];
 }
 
 export interface AppSettings {
