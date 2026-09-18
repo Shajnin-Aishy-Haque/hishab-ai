@@ -192,6 +192,17 @@ export function App() {
     return () => clearTimeout(timer);
   }, [transactions.length, accounts, dharItems.length, isLoggedIn]);
 
+  // Auto-sync when reconnecting from offline state
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const handleOnline = () => {
+      showToast('সংযোগ সক্রিয়! Drive ব্যাকআপ সিঙ্ক হচ্ছে...', 'cloud_sync');
+      backgroundSyncToDrive();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [isLoggedIn, currentUser.id]);
+
   const handleGoogleSignIn = () => {
     const clientId = getStoredGoogleClientId();
     if (!clientId) {

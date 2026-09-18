@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { scanReceiptWithGemini, type ScanReceiptResult } from '../services/geminiVision';
+import { scanReceiptWithGemini, resizeImageForVision, type ScanReceiptResult } from '../services/geminiVision';
 
 interface ReceiptScannerModalProps {
   isOpen: boolean;
@@ -32,27 +32,23 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = reader.result as string;
+    setIsScanning(true);
+    try {
+      const { dataUrl, mimeType } = await resizeImageForVision(file);
       setImagePreview(dataUrl);
-      setIsScanning(true);
-      try {
-        const res = await scanReceiptWithGemini(dataUrl, file.type || 'image/jpeg');
-        setScanResult(res);
-        onShowToast('Gemini Vision মেমো বিশ্লেষণ সম্পন্ন করেছে!', 'check_circle');
-      } catch (err: unknown) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        onShowToast(`স্ক্যান ত্রুটি: ${errMsg}`, 'error');
-      } finally {
-        setIsScanning(false);
-      }
-    };
-    reader.readAsDataURL(file);
+      const res = await scanReceiptWithGemini(dataUrl, mimeType);
+      setScanResult(res);
+      onShowToast('Gemini Vision মেমো বিশ্লেষণ সম্পন্ন করেছে!', 'check_circle');
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      onShowToast(`স্ক্যান ত্রুটি: ${errMsg}`, 'error');
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   const handleAddAll = () => {

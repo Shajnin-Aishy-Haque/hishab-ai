@@ -6,6 +6,45 @@ export interface ScanReceiptResult {
   date?: string;
 }
 
+/**
+ * Downscale large phone camera photos before sending to Gemini to prevent browser OOM and timeout
+ */
+export async function resizeImageForVision(
+  file: File,
+  maxDim = 1280,
+  quality = 0.85
+): Promise<{ dataUrl: string; mimeType: string }> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      URL.revokeObjectURL(img.src);
+      resolve({ dataUrl, mimeType: 'image/jpeg' });
+    };
+    img.onerror = () => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ dataUrl: reader.result as string, mimeType: file.type || 'image/jpeg' });
+      reader.readAsDataURL(file);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 export async function scanReceiptWithGemini(
   base64Image: string,
   mimeType: string,
