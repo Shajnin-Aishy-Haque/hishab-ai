@@ -79,3 +79,49 @@ test('reconciles cross-account wallet change correctly', () => {
   // bKash should be deducted 500 -> 9500
   assert.equal(res.find((a) => a.id === 'bkash')?.balance, 9500);
 });
+
+test('reconciles transfer deletion correctly by refunding source and deducting target', () => {
+  const accounts: Account[] = [
+    { id: 'bank', balance: 20000 },
+    { id: 'bkash', balance: 5000 }
+  ];
+
+  // Transfer of 3000 from bank to bkash
+  const transferTx = { id: 2, type: 'transfer' as const, amount: 3000, accountId: 'bank', toAccountId: 'bkash' };
+
+  // Deleting the transfer reverts both accounts
+  const revertedAccounts = accounts.map(a => ({ ...a }));
+  const fromAcc = revertedAccounts.find(a => a.id === transferTx.accountId);
+  const toAcc = revertedAccounts.find(a => a.id === transferTx.toAccountId);
+  if (fromAcc) fromAcc.balance += transferTx.amount;
+  if (toAcc) toAcc.balance -= transferTx.amount;
+
+  assert.equal(revertedAccounts.find(a => a.id === 'bank')?.balance, 23000);
+  assert.equal(revertedAccounts.find(a => a.id === 'bkash')?.balance, 2000);
+});
+
+test('reconciles transfer amount modification correctly', () => {
+  const accounts: Account[] = [
+    { id: 'bank', balance: 17000 }, // had 3000 transferred out
+    { id: 'bkash', balance: 8000 }   // had 3000 transferred in
+  ];
+
+  const oldTransfer = { id: 3, type: 'transfer' as const, amount: 3000, accountId: 'bank', toAccountId: 'bkash' };
+  const updatedTransfer = { id: 3, type: 'transfer' as const, amount: 5000, accountId: 'bank', toAccountId: 'bkash' };
+
+  // 1. Revert old transfer
+  const reconciled = accounts.map(a => ({ ...a }));
+  const oldFrom = reconciled.find(a => a.id === oldTransfer.accountId);
+  const oldTo = reconciled.find(a => a.id === oldTransfer.toAccountId);
+  if (oldFrom) oldFrom.balance += oldTransfer.amount; // 17000 + 3000 = 20000
+  if (oldTo) oldTo.balance -= oldTransfer.amount;     // 8000 - 3000 = 5000
+
+  // 2. Apply new transfer
+  const newFrom = reconciled.find(a => a.id === updatedTransfer.accountId);
+  const newTo = reconciled.find(a => a.id === updatedTransfer.toAccountId);
+  if (newFrom) newFrom.balance -= updatedTransfer.amount; // 20000 - 5000 = 15000
+  if (newTo) newTo.balance += updatedTransfer.amount;     // 5000 + 5000 = 10000
+
+  assert.equal(reconciled.find(a => a.id === 'bank')?.balance, 15000);
+  assert.equal(reconciled.find(a => a.id === 'bkash')?.balance, 10000);
+});

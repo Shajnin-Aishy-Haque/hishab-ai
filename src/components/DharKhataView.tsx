@@ -165,8 +165,25 @@ export const DharKhataView: React.FC<DharKhataViewProps> = ({
       {/* Ledger Items List */}
       <div className="space-y-2.5">
         {filteredItems.length === 0 ? (
-          <div className="py-12 text-center text-xs text-gLight-textTertiary">
-            কোনো হিসাব পাওয়া যায়নি।
+          <div className="py-12 px-4 rounded-3xl bg-gLight-surface dark:bg-gDark-surface border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-500 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[26px]">menu_book</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">
+                ধার বা দেনার কোনো খাতা নেই
+              </h4>
+              <p className="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary mt-0.5">
+                কাউকে টাকা ধার দিলে বা কারও কাছ থেকে ধার নিলে এখানে ট্র্যাক রাখুন।
+              </p>
+            </div>
+            <button
+              onClick={onOpenNewDhar}
+              className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-full tap-press shadow-sm flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[16px]">add</span>
+              <span>নতুন এন্ট্রি যোগ করুন</span>
+            </button>
           </div>
         ) : (
           filteredItems.map((item) => {

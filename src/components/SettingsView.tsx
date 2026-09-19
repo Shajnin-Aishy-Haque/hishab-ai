@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { UserProfile } from '../types';
 import { exportBackupFile, importBackupFile, exportCsvReport } from '../services/driveSync';
+import { ensureStoragePersistence, type StorageStatus } from '../services/storagePersistence';
 
 interface SettingsViewProps {
   user: UserProfile;
@@ -19,16 +20,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('hishab_gemini_key') || '');
   const [isSavingKey, setIsSavingKey] = useState(false);
+  const [storageStatus, setStorageStatus] = useState<StorageStatus | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isGoogleConnected = user.authProvider === 'google' && Boolean(user.email);
+
+  useEffect(() => {
+    ensureStoragePersistence().then(setStorageStatus);
+  }, []);
 
   const handleBackupNow = async () => {
     setIsBackingUp(true);
     try {
-      await exportBackupFile();
-      onShowToast('Google Drive ব্যাকআপ ফাইল ডাউনলোড ও সিঙ্ক হয়েছে!', 'cloud_done');
+      await exportBackupFile(user.id);
+      onShowToast('ব্যাকআপ ফাইল সফলভাবে ডাউনলোড হয়েছে!', 'file_download');
     } catch (err) {
       console.error(err);
-      onShowToast('ব্যাকআপে সমস্যা হয়েছে', 'error');
+      onShowToast('ব্যাকআপ ডাউনলোডে সমস্যা হয়েছে', 'error');
     } finally {
       setIsBackingUp(false);
     }
@@ -39,14 +47,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (!file) return;
 
     try {
-      const ok = await importBackupFile(file);
-      if (ok) {
-        onShowToast('ডাটা সফলভাবে রিস্টোর করা হয়েছে!', 'cloud_done');
+      const result = await importBackupFile(file, user.id);
+      if (result.success) {
+        const { accounts, transactions, dharItems } = result.counts;
+        onShowToast(`রিস্টোর সম্পন্ন: ${accounts}টি ওয়ালেট, ${transactions}টি লেনদেন, ${dharItems}টি ধার খাতা!`, 'cloud_done');
         onDataRestored();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      onShowToast('ভুল ফাইল ফরম্যাট! সঠিক JSON ফাইল দিন।', 'error');
+      onShowToast(err.message || 'ভুল ফাইল ফরম্যাট! সঠিক JSON ফাইল দিন।', 'error');
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -63,20 +72,111 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div className="flex-1 px-5 flex flex-col gap-4 pt-3 pb-28 animate-in fade-in duration-150">
+    <div className="flex-1 px-5 flex flex-col gap-4 pt-3 pb-32 animate-in fade-in duration-150">
       <h2 className="text-lg font-bold px-1 text-gLight-textPrimary dark:text-gDark-textPrimary">
         Settings &amp; Backup
       </h2>
 
-      {/* GOOGLE DRIVE AUTO-BACKUP HERO CARD (Matches Stitch lines 560-612) */}
-      <section className="bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-5 flex flex-col gap-4 shadow-sm border border-black/5 dark:border-white/5">
+      {/* 1. DATA DURABILITY & STORAGE STATUS */}
+      <section className="bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-5 flex flex-col gap-3 shadow-sm border border-black/5 dark:border-white/5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[22px]">shield</span>
+            </div>
+            <div>
+              <div className="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">
+                Local Storage Durability
+              </div>
+              <div className="text-xs text-gLight-textSecondary dark:text-gDark-textSecondary">
+                {storageStatus?.persisted ? 'Protected against browser eviction' : 'Standard local browser storage'}
+              </div>
+            </div>
+          </div>
+          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${
+            storageStatus?.persisted
+              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+              : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+          }`}>
+            <span className="material-symbols-outlined text-[14px]">
+              {storageStatus?.persisted ? 'check_circle' : 'info'}
+            </span>
+            {storageStatus?.persisted ? 'Persisted' : 'Standard'}
+          </span>
+        </div>
+
+        <div className="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl p-3 flex items-center justify-between text-xs text-gLight-textTertiary dark:text-gDark-textTertiary">
+          <span>Local Space Used:</span>
+          <span className="font-mono text-gLight-textPrimary dark:text-gDark-textPrimary font-semibold">
+            {storageStatus?.formattedUsage || 'Calculated on write'} {storageStatus?.formattedQuota ? `(Quota: ${storageStatus.formattedQuota})` : ''}
+          </span>
+        </div>
+      </section>
+
+      {/* 2. LOCAL 1-CLICK BACKUP & RESTORE (100% OFFLINE & ZERO CLOUD DEPENDENCY) */}
+      <section className="bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-5 flex flex-col gap-3.5 shadow-sm border border-black/5 dark:border-white/5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[22px]">save</span>
+            </div>
+            <div>
+              <div className="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">
+                Local Backup &amp; Restore
+              </div>
+              <div className="text-xs text-gLight-textSecondary dark:text-gDark-textSecondary">
+                100% Private, Offline JSON File
+              </div>
+            </div>
+          </div>
+          <span className="text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
+            Recommended
+          </span>
+        </div>
+
+        <p className="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary leading-relaxed">
+          আপনার সমস্ত লেনদেন, ওয়ালেট ও ধার খাতার একটি পূর্ণাঙ্গ কপি নিজের ফোনে বা কম্পিউটারে ডাউনলোড করে সংরক্ষণ করুন।
+        </p>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <button
+            onClick={handleBackupNow}
+            disabled={isBackingUp}
+            className="bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg font-semibold text-xs py-2.5 px-3 rounded-full tap-press flex items-center justify-center gap-1.5 shadow-sm hover:opacity-95 transition-opacity"
+          >
+            <span className="material-symbols-outlined text-[16px]">file_download</span>
+            <span>{isBackingUp ? 'ডাউনলোড হচ্ছে...' : 'Download Backup'}</span>
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-gLight-textPrimary dark:text-gDark-textPrimary border border-black/5 dark:border-white/10 font-semibold text-xs py-2.5 px-3 rounded-full tap-press flex items-center justify-center gap-1.5 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+          >
+            <span className="material-symbols-outlined text-[16px]">file_upload</span>
+            <span>Restore from File</span>
+          </button>
+        </div>
+
+        <button
+          onClick={async () => {
+            await exportCsvReport();
+            onShowToast('এক্সেল / CSV রিপোর্ট ডাউনলোড হয়েছে!', 'table_view');
+          }}
+          className="w-full py-2 bg-black/5 dark:bg-white/5 text-gLight-textSecondary dark:text-gDark-textSecondary hover:text-gLight-textPrimary rounded-full text-xs font-semibold tap-press flex items-center justify-center gap-1.5 transition-colors"
+        >
+          <span className="material-symbols-outlined text-[16px]">table_view</span>
+          <span>Export All to Excel/CSV Sheet</span>
+        </button>
+      </section>
+
+      {/* 3. GOOGLE DRIVE OPTIONAL CLOUD SYNC */}
+      <section className="bg-gLight-surface dark:bg-gDark-surface rounded-3xl p-5 flex flex-col gap-3.5 shadow-sm border border-black/5 dark:border-white/5">
         <div className="flex items-center justify-between">
           <div
             onClick={onOpenUserModal}
             className="flex items-center gap-3 cursor-pointer tap-press group"
           >
-            <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center shadow-sm shrink-0">
-              <svg className="w-6 h-6" viewBox="0 0 87.3 78">
+            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-sm shrink-0">
+              <svg className="w-5 h-5" viewBox="0 0 87.3 78">
                 <path fill="#0066da" d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" />
                 <path fill="#00ac47" d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" />
                 <path fill="#ea4335" d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" />
@@ -86,101 +186,60 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </svg>
             </div>
             <div>
-              <div className="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary group-hover:text-gLight-blue">
-                Google Drive Backup
+              <div className="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary group-hover:text-gLight-blue flex items-center gap-1.5">
+                <span>Google Drive Cloud Sync</span>
+                {isGoogleConnected && (
+                  <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">
+                    Connected
+                  </span>
+                )}
               </div>
-              <div className="text-xs text-gLight-textSecondary dark:text-gDark-textSecondary">
-                {user.email || 'Click to connect Google Account'}
+              <div className="text-xs text-gLight-textSecondary dark:text-gDark-textSecondary truncate max-w-[200px]">
+                {isGoogleConnected ? user.email : 'Optional • Automatic cloud sync'}
               </div>
             </div>
           </div>
 
-          <label className="relative inline-flex items-center cursor-pointer tap-press">
-            <input
-              type="checkbox"
-              checked={autoBackup}
-              onChange={(e) => setAutoBackup(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-          </label>
-        </div>
-
-        <div className="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh rounded-2xl p-3.5 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-gLight-textSecondary dark:text-gDark-textSecondary font-medium">
-              Backup Status:
-            </span>
-            <span className="font-bold text-gLight-green dark:text-gDark-green flex items-center gap-1">
-              <span className="material-symbols-outlined text-[16px]">check_circle</span>
-              Auto-Sync Active (Per-User Saved)
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-xs text-gLight-textTertiary dark:text-gDark-textTertiary">
-            <span>Destination:</span>
-            <span className="font-mono text-[11px] text-gLight-textPrimary dark:text-gDark-textPrimary">
-              My Drive / Hishab AI / data_{user.id}.json
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-xs text-gLight-textTertiary dark:text-gDark-textTertiary">
-            <span>Active Profile:</span>
-            <span className="text-gLight-textPrimary dark:text-gDark-textPrimary font-medium">
-              {user.email ? `${user.name} (${user.email})` : user.name}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <button
-            onClick={handleBackupNow}
-            disabled={isBackingUp}
-            className="bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg font-semibold text-xs py-2.5 px-3 rounded-full tap-press flex items-center justify-center gap-1.5 shadow-sm transition-opacity"
-          >
-            <span className="material-symbols-outlined text-[16px]">cloud_upload</span>
-            <span>{isBackingUp ? 'Backing up...' : 'Back up Now'}</span>
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-gLight-surfaceHigh dark:bg-gDark-surfaceHigh text-gLight-textPrimary dark:text-gDark-textPrimary border border-black/5 dark:border-white/10 font-semibold text-xs py-2.5 px-3 rounded-full tap-press flex items-center justify-center gap-1.5 transition-colors"
-          >
-            <span className="material-symbols-outlined text-[16px]">cloud_download</span>
-            <span>Restore Data</span>
-          </button>
+          {isGoogleConnected ? (
+            <label className="relative inline-flex items-center cursor-pointer tap-press">
+              <input
+                type="checkbox"
+                checked={autoBackup}
+                onChange={(e) => setAutoBackup(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+            </label>
+          ) : (
+            <button
+              onClick={onOpenUserModal}
+              className="text-xs font-bold text-gLight-blue dark:text-gDark-blue bg-gLight-blueContainer dark:bg-gDark-blueContainer px-3 py-1.5 rounded-full tap-press hover:opacity-90 transition-opacity"
+            >
+              Connect
+            </button>
+          )}
         </div>
       </section>
 
-      {/* Preferences List */}
+      {/* 4. PREFERENCES LIST */}
       <div className="bg-gLight-surface dark:bg-gDark-surface rounded-3xl divide-y divide-black/5 dark:divide-white/5 overflow-hidden shadow-sm border border-black/5 dark:border-white/5">
         <div className="p-4 flex items-center justify-between">
           <span className="text-sm font-medium text-gLight-textPrimary dark:text-gDark-textPrimary">Currency</span>
           <span className="text-xs font-semibold text-gLight-blue dark:text-gDark-blue">BDT (৳)</span>
         </div>
         <div className="p-4 flex items-center justify-between">
-          <span className="text-sm font-medium text-gLight-textPrimary dark:text-gDark-textPrimary">Voice Recognition</span>
-          <span className="text-xs font-semibold text-gLight-green dark:text-gDark-green">Bangla &amp; Banglish</span>
+          <span className="text-sm font-medium text-gLight-textPrimary dark:text-gDark-textPrimary">Voice &amp; NLP Parsing</span>
+          <span className="text-xs font-semibold text-gLight-green dark:text-gDark-green">বাংলা, ইংরেজি ও বাংলিশ</span>
         </div>
-        <div
-          onClick={async () => {
-            await exportCsvReport();
-            onShowToast('এক্সেল / CSV রিপোর্ট ডাউনলোড হয়েছে!', 'table_view');
-          }}
-          className="p-4 flex items-center justify-between cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 tap-press transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-gLight-green dark:text-gDark-green text-[20px]">
-              table_view
-            </span>
-            <span className="text-sm font-medium text-gLight-textPrimary dark:text-gDark-textPrimary">
-              Export all to Excel/CSV
-            </span>
-          </div>
-          <span className="material-symbols-outlined text-[18px] text-gLight-textTertiary dark:text-gDark-textTertiary">
-            file_download
+        <div className="p-4 flex items-center justify-between">
+          <span className="text-sm font-medium text-gLight-textPrimary dark:text-gDark-textPrimary">Active Profile</span>
+          <span className="text-xs font-semibold text-gLight-textSecondary dark:text-gDark-textSecondary">
+            {isGoogleConnected ? `${user.name} (${user.email})` : user.name}
           </span>
         </div>
       </div>
 
-      {/* Legal & App Info */}
+      {/* 5. LEGAL & APP INFO */}
       <div className="bg-gLight-surface dark:bg-gDark-surface rounded-3xl divide-y divide-black/5 dark:divide-white/5 overflow-hidden shadow-sm border border-black/5 dark:border-white/5">
         <a
           href="/privacy.html"
@@ -224,7 +283,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* Gemini Vision Key */}
+      {/* 6. GEMINI VISION KEY (OPTIONAL) */}
       <div className="p-4 rounded-3xl bg-gLight-surface dark:bg-gDark-surface border border-black/5 dark:border-white/5 space-y-2.5">
         <span className="text-xs font-bold uppercase tracking-wider text-gLight-textSecondary dark:text-gDark-textSecondary">
           Gemini 2.0 Flash API Key (Optional)

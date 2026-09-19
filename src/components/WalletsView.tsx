@@ -89,7 +89,25 @@ export const WalletsView: React.FC<WalletsViewProps> = ({
           Your Wallets
         </span>
 
-        {accounts.map((acc) => {
+        {accounts.length === 0 ? (
+          <div className="py-12 px-4 rounded-3xl bg-gLight-surface dark:bg-gDark-surface border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-gLight-blueContainer/40 dark:bg-gDark-blueContainer/40 text-gLight-blue flex items-center justify-center">
+              <span className="material-symbols-outlined text-[26px]">account_balance_wallet</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">কোনো ওয়ালেট পাওয়া যায়নি</h4>
+              <p className="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary mt-0.5">ক্যাশ, বিকাশ বা ব্যাংক অ্যাকাউন্ট যোগ করুন</p>
+            </div>
+            <button
+              onClick={onOpenAddAccount}
+              className="bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg text-xs font-bold px-4 py-2 rounded-full tap-press shadow-sm flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[16px]">add</span>
+              <span>নতুন ওয়ালেট যোগ করুন</span>
+            </button>
+          </div>
+        ) : (
+          accounts.map((acc) => {
           const isSelected = selectedAccId === acc.id;
           const isEditing = editingId === acc.id;
 
@@ -207,7 +225,8 @@ export const WalletsView: React.FC<WalletsViewProps> = ({
               )}
             </div>
           );
-        })}
+        })
+      )}
       </div>
     </div>
   );

@@ -1,22 +1,13 @@
 import { db } from '../db/db';
-import type { Account, Category, DharItem, Transaction } from '../types';
+import { getLocalDateString } from '../utils/dateUtils';
+import {
+  type BackupSnapshot,
+  type ValidationResult,
+  validateBackupSchema
+} from './backupValidation';
 
-export interface BackupSnapshot {
-  app: string;
-  version: string;
-  exportedAt: string;
-  formattedDate: string;
-  accounts: Account[];
-  categories: Category[];
-  transactions: Transaction[];
-  dharItems: DharItem[];
-  stats: {
-    netBalance: number;
-    totalTransactions: number;
-    totalPabo: number;
-    totalDebo: number;
-  };
-}
+export type { BackupSnapshot, ValidationResult };
+export { validateBackupSchema };
 
 export async function createDatabaseSnapshot(userId?: string): Promise<BackupSnapshot> {
   const [accounts, categories, transactions, dharItems] = await Promise.all([
@@ -50,8 +41,6 @@ export async function createDatabaseSnapshot(userId?: string): Promise<BackupSna
   };
 }
 
-import { getLocalDateString } from '../utils/dateUtils';
-
 export async function exportBackupFile(userId?: string) {
   const snapshot = await createDatabaseSnapshot(userId);
   const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
@@ -66,20 +55,37 @@ export async function exportBackupFile(userId?: string) {
   URL.revokeObjectURL(url);
 }
 
-export async function importBackupFile(file: File, targetUserId?: string): Promise<boolean> {
+export async function importBackupFile(
+  file: File,
+  targetUserId?: string
+): Promise<{ success: boolean; counts: { accounts: number; transactions: number; categories: number; dharItems: number } }> {
+  // Safety check: max 15MB file limit
+  if (file.size > 15 * 1024 * 1024) {
+    throw new Error('ফাইল সাইজ অনেক বড় (সর্বোচ্চ ১৫ মেগাবাইট অনুমোদিত)।');
+  }
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const data = JSON.parse(e.target?.result as string) as BackupSnapshot;
-        if (!data.app || (!data.transactions && !data.accounts)) {
-          throw new Error('Invalid backup file structure.');
+        const text = e.target?.result as string;
+        let parsed: any;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          throw new Error('ফাইলটি সঠিক JSON ফরম্যাটে নেই।');
         }
 
+        const validation = validateBackupSchema(parsed);
+        if (!validation.valid || !validation.sanitized) {
+          throw new Error(validation.errors.join(' ') || 'ব্যাকআপ ফাইলটি ক্ষতিগ্রস্ত বা অবৈধ।');
+        }
+
+        const data = validation.sanitized;
         const effectiveUserId = targetUserId;
 
         await db.transaction('rw', [db.accounts, db.categories, db.transactions, db.dharItems], async () => {
-          if (data.accounts && data.accounts.length > 0) {
+          if (data.accounts.length > 0) {
             if (effectiveUserId) {
               await db.accounts.where('userId').equals(effectiveUserId).delete();
               const mapped = data.accounts.map(a => ({ ...a, userId: effectiveUserId }));
@@ -89,7 +95,7 @@ export async function importBackupFile(file: File, targetUserId?: string): Promi
               await db.accounts.bulkAdd(data.accounts);
             }
           }
-          if (data.categories && data.categories.length > 0) {
+          if (data.categories.length > 0) {
             if (effectiveUserId) {
               await db.categories.where('userId').equals(effectiveUserId).delete();
               const mapped = data.categories.map(c => ({ ...c, userId: effectiveUserId }));
@@ -99,7 +105,7 @@ export async function importBackupFile(file: File, targetUserId?: string): Promi
               await db.categories.bulkAdd(data.categories);
             }
           }
-          if (data.transactions && data.transactions.length > 0) {
+          if (data.transactions.length > 0) {
             if (effectiveUserId) {
               await db.transactions.where('userId').equals(effectiveUserId).delete();
               const mapped = data.transactions.map(t => ({ ...t, userId: effectiveUserId }));
@@ -109,7 +115,7 @@ export async function importBackupFile(file: File, targetUserId?: string): Promi
               await db.transactions.bulkAdd(data.transactions);
             }
           }
-          if (data.dharItems && data.dharItems.length > 0) {
+          if (data.dharItems.length > 0) {
             if (effectiveUserId) {
               await db.dharItems.where('userId').equals(effectiveUserId).delete();
               const mapped = data.dharItems.map(d => ({ ...d, userId: effectiveUserId }));
@@ -121,12 +127,12 @@ export async function importBackupFile(file: File, targetUserId?: string): Promi
           }
         });
 
-        resolve(true);
+        resolve({ success: true, counts: validation.counts! });
       } catch (err) {
         reject(err);
       }
     };
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = () => reject(new Error('ফাইল রিড করতে ব্যর্থ হয়েছে'));
     reader.readAsText(file);
   });
 }

@@ -55,7 +55,7 @@ export const DharSettleModal: React.FC<DharSettleModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-150">
-      <div className="bg-gLight-surface dark:bg-gDark-surface rounded-t-3xl max-w-md w-full p-6 flex flex-col gap-4 max-h-[88vh] overflow-y-auto shadow-2xl border-t border-black/10 dark:border-white/10">
+      <div className="bg-gLight-surface dark:bg-gDark-surface rounded-t-3xl max-w-md w-full p-6 flex flex-col gap-4 modal-bottom-sheet overflow-y-auto shadow-2xl border-t border-black/10 dark:border-white/10">
         {/* Header (Matches Stitch lines 1244-1257) */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">

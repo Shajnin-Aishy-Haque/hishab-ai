@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import type { BackupSnapshot } from '../src/services/driveSync.ts';
+import { validateBackupSchema, type BackupSnapshot } from '../src/services/backupValidation.ts';
 
 test('validates BackupSnapshot structure', () => {
   const mockSnapshot: BackupSnapshot = {
@@ -41,4 +41,44 @@ test('ensures CSV UTF-8 BOM encoding for Bengali character preservation', () => 
   const csvContent = '\uFEFF' + rows.map((r) => r.join(',')).join('\n');
   assert.ok(csvContent.startsWith('\uFEFF'));
   assert.ok(csvContent.includes('কাঁচাবাজার'));
+});
+
+test('validateBackupSchema correctly parses and sanitizes valid backup', () => {
+  const validData = {
+    app: 'Hishab AI',
+    version: '2.0.0',
+    accounts: [
+      { id: 'acc_1', name: 'Cash', type: 'cash', balance: 2500 }
+    ],
+    categories: [
+      { id: 'cat_1', name: 'Groceries', budget: 5000 }
+    ],
+    transactions: [
+      { amount: 200, type: 'expense', note: 'Eggs & Milk', date: '2026-09-19', time: '10:00 AM' }
+    ],
+    dharItems: [
+      { person: 'Karim', amount: 500, type: 'pabo', status: 'pending' }
+    ]
+  };
+
+  const res = validateBackupSchema(validData);
+  assert.equal(res.valid, true);
+  assert.equal(res.counts?.accounts, 1);
+  assert.equal(res.counts?.transactions, 1);
+  assert.equal(res.counts?.dharItems, 1);
+  assert.equal(res.sanitized?.stats.netBalance, 2500);
+});
+
+test('validateBackupSchema rejects corrupted and empty payloads', () => {
+  const emptyRes = validateBackupSchema(null);
+  assert.equal(emptyRes.valid, false);
+
+  const nonObjRes = validateBackupSchema('string_data');
+  assert.equal(nonObjRes.valid, false);
+
+  const corruptedRes = validateBackupSchema({
+    randomKey: 123
+  });
+  assert.equal(corruptedRes.valid, false);
+  assert.ok(corruptedRes.errors.length > 0);
 });

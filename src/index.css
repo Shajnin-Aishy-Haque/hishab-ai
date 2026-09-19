@@ -15,7 +15,29 @@
   }
 }
 
-/* Material You smooth transitions */
+/* Mobile Safe-Area & Dynamic Viewport Height Utilities */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+.modal-bottom-sheet {
+  max-height: 90vh;
+  max-height: 90dvh;
+  overscroll-behavior-y: contain;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Material You & Mobile Touch Enhancements */
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  min-height: 100vh;
+  min-height: 100dvh;
 }

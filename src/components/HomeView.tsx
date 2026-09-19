@@ -273,40 +273,55 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         {/* Mini Ledger Items */}
         <div className="flex flex-col gap-2 pt-1">
-          {pendingDharItems.map((item) => {
-            const isPabo = item.type === 'pabo';
-            return (
-              <div
-                key={item.id}
-                className="bg-gLight-surfaceHigh/60 dark:bg-gDark-surfaceHigh/60 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs"
-              >
-                <div className="flex items-center gap-2 min-w-0 pr-2">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${isPabo ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-                  <span className="font-semibold text-gLight-textPrimary dark:text-gDark-textPrimary truncate">
-                    {item.person}
-                  </span>
-                  <span className="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary truncate">
-                    • {item.note || 'ধার'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className={`font-bold ${isPabo ? 'text-gLight-green dark:text-gDark-green' : 'text-rose-400'}`}>
-                    ৳ {item.amount.toLocaleString('en-IN')}
-                  </span>
-                  <button
-                    onClick={() => onOpenSettleModal(item)}
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full tap-press ${
-                      isPabo
-                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25'
-                        : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 hover:bg-rose-500/25'
-                    }`}
-                  >
-                    {isPabo ? 'পেয়েছি' : 'পরিশোধ'}
-                  </button>
-                </div>
+          {pendingDharItems.length === 0 ? (
+            <div
+              onClick={onOpenDharView}
+              className="bg-gLight-surfaceHigh/40 dark:bg-gDark-surfaceHigh/40 rounded-xl px-3.5 py-3 flex items-center justify-between text-xs cursor-pointer tap-press hover:bg-gLight-surfaceHigh/60 dark:hover:bg-gDark-surfaceHigh/60 transition-colors"
+            >
+              <div className="flex items-center gap-2 text-gLight-textTertiary dark:text-gDark-textTertiary">
+                <span className="material-symbols-outlined text-[16px] text-emerald-500">verified</span>
+                <span>কোনো বকেয়া বা ঋণ নেই (হিসাব পরিষ্কার)</span>
               </div>
-            );
-          })}
+              <span className="text-[11px] font-semibold text-gLight-blue dark:text-gDark-blue">
+                + এন্ট্রি দিন
+              </span>
+            </div>
+          ) : (
+            pendingDharItems.map((item) => {
+              const isPabo = item.type === 'pabo';
+              return (
+                <div
+                  key={item.id}
+                  className="bg-gLight-surfaceHigh/60 dark:bg-gDark-surfaceHigh/60 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs"
+                >
+                  <div className="flex items-center gap-2 min-w-0 pr-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${isPabo ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                    <span className="font-semibold text-gLight-textPrimary dark:text-gDark-textPrimary truncate">
+                      {item.person}
+                    </span>
+                    <span className="text-[10px] text-gLight-textTertiary dark:text-gDark-textTertiary truncate">
+                      • {item.note || 'ধার'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`font-bold ${isPabo ? 'text-gLight-green dark:text-gDark-green' : 'text-rose-400'}`}>
+                      ৳ {item.amount.toLocaleString('en-IN')}
+                    </span>
+                    <button
+                      onClick={() => onOpenSettleModal(item)}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full tap-press ${
+                        isPabo
+                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25'
+                          : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 hover:bg-rose-500/25'
+                      }`}
+                    >
+                      {isPabo ? 'পেয়েছি' : 'পরিশোধ'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </section>
 
@@ -379,8 +394,34 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <div className="flex flex-col gap-2">
           {filteredTransactions.length === 0 ? (
-            <div className="py-8 text-center text-xs text-gLight-textTertiary">
-              কোনো লেনদেন পাওয়া যায়নি। নিচে কথা বলে বা লিখে যুক্ত করুন!
+            <div className="py-8 px-4 rounded-3xl bg-gLight-surface dark:bg-gDark-surface border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center gap-3 animate-in fade-in duration-200 shadow-sm">
+              <div className="w-12 h-12 rounded-2xl bg-gLight-blueContainer/40 dark:bg-gDark-blueContainer/40 text-gLight-blue dark:text-gDark-blue flex items-center justify-center">
+                <span className="material-symbols-outlined text-[26px]">receipt_long</span>
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-gLight-textPrimary dark:text-gDark-textPrimary">
+                  কোনো লেনদেন যুক্ত করা হয়নি
+                </h4>
+                <p className="text-xs text-gLight-textTertiary dark:text-gDark-textTertiary mt-1 max-w-xs leading-relaxed">
+                  আপনার দৈনিক আয়, বাজার ও খরচের হিসাব রাখতে নিচের যেকোনো একটি উপায়ে শুরু করুন:
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <button
+                  onClick={onOpenManualEntryModal}
+                  className="bg-gLight-blue dark:bg-gDark-blue text-white dark:text-gDark-bg text-xs font-bold px-3.5 py-2 rounded-full tap-press shadow-sm flex items-center gap-1.5 hover:opacity-95"
+                >
+                  <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                  <span>+ প্রথম খরচ লিখুন</span>
+                </button>
+                <button
+                  onClick={onOpenWalletsView}
+                  className="bg-black/5 dark:bg-white/10 text-gLight-textPrimary dark:text-gDark-textPrimary text-xs font-semibold px-3.5 py-2 rounded-full tap-press flex items-center gap-1.5 hover:bg-black/10 dark:hover:bg-white/15"
+                >
+                  <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+                  <span>ব্যালেন্স সেট করুন</span>
+                </button>
+              </div>
             </div>
           ) : (
             filteredTransactions.map((tx) => {

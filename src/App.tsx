@@ -28,6 +28,7 @@ import {
 import { uploadToGoogleDrive } from './services/googleDriveApi';
 import { createDatabaseSnapshot } from './services/driveSync';
 import { getLocalDateString, getLocalTimeString } from './utils/dateUtils';
+import { ensureStoragePersistence } from './services/storagePersistence';
 
 import { Header } from './components/Header';
 import { HomeView } from './components/HomeView';
@@ -116,8 +117,19 @@ export function App() {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [onboardingUser, setOnboardingUser] = useState<UserProfile | null>(null);
 
-  // Sync animation text
-  const [syncText, setSyncText] = useState('Drive: Auto-Synced');
+  // Sync animation text (Accurately reflects offline safe storage vs Google Drive)
+  const [syncText, setSyncText] = useState(() => {
+    return getStoredAccessToken() ? 'Drive: Synced' : 'Local: Protected';
+  });
+
+  // Storage Persistence initialization on app mount
+  useEffect(() => {
+    ensureStoragePersistence().then((status) => {
+      if (status.persisted && !getStoredAccessToken()) {
+        setSyncText('Local: Protected');
+      }
+    });
+  }, []);
 
   // Toast feedback
   const [toastMsg, setToastMsg] = useState('');
@@ -386,27 +398,34 @@ export function App() {
     await db.transaction('rw', [db.transactions, db.accounts], async () => {
       await db.transactions.put(updated);
 
-      // Reconcile balance across same or different accounts
-      if (oldTx.accountId === updated.accountId) {
-        const acc = accounts.find((a) => a.id === updated.accountId);
-        if (acc) {
-          const oldDelta = oldTx.type === 'income' ? oldTx.amount : -oldTx.amount;
-          const newDelta = updated.type === 'income' ? updated.amount : -updated.amount;
-          const balanceDiff = newDelta - oldDelta;
-          await db.accounts.update(updated.accountId, { balance: acc.balance + balanceDiff });
-        }
+      // 1. Revert effect of previous transaction
+      if (oldTx.type === 'transfer' && oldTx.toAccountId) {
+        const oldFrom = accounts.find((a) => a.id === oldTx.accountId);
+        const oldTo = accounts.find((a) => a.id === oldTx.toAccountId);
+        if (oldFrom) await db.accounts.update(oldTx.accountId, { balance: oldFrom.balance + oldTx.amount });
+        if (oldTo) await db.accounts.update(oldTx.toAccountId, { balance: oldTo.balance - oldTx.amount });
       } else {
-        // Revert old account balance
         const oldAcc = accounts.find((a) => a.id === oldTx.accountId);
         if (oldAcc) {
-          const oldDelta = oldTx.type === 'income' ? oldTx.amount : -oldTx.amount;
-          await db.accounts.update(oldTx.accountId, { balance: oldAcc.balance - oldDelta });
+          const revertDelta = oldTx.type === 'income' ? -oldTx.amount : oldTx.amount;
+          await db.accounts.update(oldTx.accountId, { balance: oldAcc.balance + revertDelta });
         }
-        // Apply new account balance
-        const newAcc = accounts.find((a) => a.id === updated.accountId);
+      }
+
+      // Re-fetch accounts in current transaction context
+      const currentAccounts = await db.accounts.where('userId').equals(currentUser.id).toArray();
+
+      // 2. Apply effect of updated transaction
+      if (updated.type === 'transfer' && updated.toAccountId) {
+        const newFrom = currentAccounts.find((a) => a.id === updated.accountId);
+        const newTo = currentAccounts.find((a) => a.id === updated.toAccountId);
+        if (newFrom) await db.accounts.update(updated.accountId, { balance: newFrom.balance - updated.amount });
+        if (newTo) await db.accounts.update(updated.toAccountId, { balance: newTo.balance + updated.amount });
+      } else {
+        const newAcc = currentAccounts.find((a) => a.id === updated.accountId);
         if (newAcc) {
-          const newDelta = updated.type === 'income' ? updated.amount : -updated.amount;
-          await db.accounts.update(updated.accountId, { balance: newAcc.balance + newDelta });
+          const applyDelta = updated.type === 'income' ? updated.amount : -updated.amount;
+          await db.accounts.update(updated.accountId, { balance: newAcc.balance + applyDelta });
         }
       }
     });
@@ -420,10 +439,18 @@ export function App() {
 
     await db.transaction('rw', [db.transactions, db.accounts], async () => {
       await db.transactions.delete(id);
-      const acc = accounts.find((a) => a.id === tx.accountId);
-      if (acc) {
-        const reverseDelta = tx.type === 'income' ? -tx.amount : tx.amount;
-        await db.accounts.update(tx.accountId, { balance: acc.balance + reverseDelta });
+
+      if (tx.type === 'transfer' && tx.toAccountId) {
+        const fromAcc = accounts.find((a) => a.id === tx.accountId);
+        const toAcc = accounts.find((a) => a.id === tx.toAccountId);
+        if (fromAcc) await db.accounts.update(tx.accountId, { balance: fromAcc.balance + tx.amount });
+        if (toAcc) await db.accounts.update(tx.toAccountId, { balance: toAcc.balance - tx.amount });
+      } else {
+        const acc = accounts.find((a) => a.id === tx.accountId);
+        if (acc) {
+          const reverseDelta = tx.type === 'income' ? -tx.amount : tx.amount;
+          await db.accounts.update(tx.accountId, { balance: acc.balance + reverseDelta });
+        }
       }
     });
 
