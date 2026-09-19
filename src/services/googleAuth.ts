@@ -69,7 +69,7 @@ export function getStoredAccessToken(): string | null {
 
   if (!token || !expiry) return null;
 
-  // Check if expired (with 60s buffer)
+  // Check if expired (with 60s safety buffer)
   if (Date.now() > parseInt(expiry, 10) - 60000) {
     localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
     localStorage.removeItem(TOKEN_EXPIRY_STORAGE_KEY);
@@ -100,6 +100,163 @@ export interface GoogleUserInfo {
   email_verified?: boolean;
 }
 
+export interface FormattedAuthError {
+  code: string;
+  title: string;
+  message: string;
+  canRetry: boolean;
+}
+
+/**
+ * Standard RFC 5322 compatible email validation
+ */
+export function isValidEmail(email: string): boolean {
+  const trimmed = email.trim();
+  if (!trimmed || trimmed.length < 5 || trimmed.length > 254) return false;
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  return emailRegex.test(trimmed);
+}
+
+/**
+ * Resilient loader for Google Identity Services SDK.
+ * Handles race conditions, dynamic script injection, and timeouts.
+ */
+export async function ensureGoogleSdkLoaded(timeoutMs: number = 4000): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  if (window.google?.accounts?.oauth2) return true;
+
+  // Check if script element is already on DOM; if not, inject it
+  let script = document.querySelector<HTMLScriptElement>('script[src*="accounts.google.com/gsi/client"]');
+  if (!script) {
+    script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }
+
+  const startTime = Date.now();
+  return new Promise((resolve) => {
+    const interval = setInterval(() => {
+      if (window.google?.accounts?.oauth2) {
+        clearInterval(interval);
+        resolve(true);
+      } else if (Date.now() - startTime >= timeoutMs) {
+        clearInterval(interval);
+        resolve(false);
+      }
+    }, 80);
+  });
+}
+
+/**
+ * Format Google OAuth errors into friendly, actionable Banglish and English messages.
+ */
+export function formatGoogleAuthError(err: any): FormattedAuthError {
+  const raw = String(err?.message || err?.error || err || '').toLowerCase();
+
+  if (raw.includes('popup_closed') || err?.error === 'popup_closed_by_user') {
+    return {
+      code: 'POPUP_CLOSED',
+      title: 'Sign-In Cancelled',
+      message: 'Google Sign-In উইন্ডো বন্ধ করা হয়েছে। প্রয়োজনে আবার চেষ্টা করতে পারেন।',
+      canRetry: true
+    };
+  }
+
+  if (raw.includes('access_denied') || err?.error === 'access_denied') {
+    return {
+      code: 'ACCESS_DENIED',
+      title: 'Permission Denied',
+      message: 'Google Drive এবং প্রোফাইল এক্সেস দেওয়া হয়নি। ক্লাউড ব্যাকআপের জন্য পারমিশন প্রয়োজন।',
+      canRetry: true
+    };
+  }
+
+  if (raw.includes('popup_blocked') || raw.includes('blocked')) {
+    return {
+      code: 'POPUP_BLOCKED',
+      title: 'Popup Blocked',
+      message: 'ব্রাউজার পপআপ ব্লক করেছে। অনুগ্রহ করে ব্রাউজার সেটিংসে পপআপ Allow করুন।',
+      canRetry: true
+    };
+  }
+
+  if (raw.includes('network') || (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean' && !navigator.onLine)) {
+    return {
+      code: 'NETWORK_OFFLINE',
+      title: 'Internet Disconnected',
+      message: 'ইন্টারনেট সংযোগ পাওয়া যায়নি। অফলাইনে আপনি Direct Email বা গেস্ট মোড ব্যবহার করতে পারেন।',
+      canRetry: true
+    };
+  }
+
+  if (raw.includes('idpiframe_initialization_failed') || raw.includes('cookies')) {
+    return {
+      code: 'COOKIE_BLOCKED',
+      title: 'Third-Party Cookies Required',
+      message: 'ব্রাউজারে থার্ড-পার্টি কুকি ব্লক করা থাকতে পারে। ব্রাউজার সেটিংসে কুকি এনাবল করুন।',
+      canRetry: true
+    };
+  }
+
+  return {
+    code: 'UNKNOWN_ERROR',
+    title: 'Google Sign-In Failed',
+    message: err?.message || 'Google সাইন-ইনে সমস্যা হয়েছে। Client ID এবং সংযোগ যাচাই করুন।',
+    canRetry: true
+  };
+}
+
+/**
+ * Silent Refresh Access Token using Google Identity Services tokenClient.
+ * Renews access token without opening an interactive popup if already authorized.
+ */
+export async function silentRefreshAccessToken(clientId: string): Promise<string | null> {
+  const isLoaded = await ensureGoogleSdkLoaded(2500);
+  const oauth2 = window.google?.accounts?.oauth2;
+  if (!isLoaded || !oauth2) return null;
+
+  return new Promise((resolve) => {
+    try {
+      let isSettled = false;
+      const timeout = setTimeout(() => {
+        if (!isSettled) {
+          isSettled = true;
+          resolve(null);
+        }
+      }, 7000);
+
+      const tokenClient = oauth2.initTokenClient({
+        client_id: clientId.trim(),
+        scope: GOOGLE_OAUTH_SCOPES,
+        prompt: '', // Silent re-authorization without consent popup
+        callback: (response) => {
+          if (isSettled) return;
+          isSettled = true;
+          clearTimeout(timeout);
+          if (response.access_token) {
+            saveAccessToken(response.access_token, response.expires_in || 3600);
+            resolve(response.access_token);
+          } else {
+            resolve(null);
+          }
+        },
+        error_callback: () => {
+          if (isSettled) return;
+          isSettled = true;
+          clearTimeout(timeout);
+          resolve(null);
+        }
+      });
+
+      tokenClient.requestAccessToken({ prompt: '' });
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
 /**
  * Fetch real Google User Profile using OAuth Access Token
  */
@@ -120,23 +277,26 @@ export async function fetchGoogleUserProfile(accessToken: string): Promise<Googl
 /**
  * Trigger Real 1-Click Google OAuth Sign-In via Google Identity Services
  */
-export function requestRealGoogleOAuth(
+export async function requestRealGoogleOAuth(
   clientId: string,
   onSuccess: (userInfo: GoogleUserInfo, accessToken: string) => void,
   onError: (err: any) => void
-): void {
-  if (!window.google?.accounts?.oauth2) {
-    onError(new Error('Google Identity Services SDK not loaded yet. Check your internet connection.'));
-    return;
-  }
-
+): Promise<void> {
   if (!clientId.trim()) {
     onError(new Error('Google Client ID is missing. Please configure your Google OAuth Client ID.'));
     return;
   }
 
+  // Gracefully ensure GIS SDK is loaded before initiating flow
+  const isLoaded = await ensureGoogleSdkLoaded(4000);
+  const oauth2 = window.google?.accounts?.oauth2;
+  if (!isLoaded || !oauth2) {
+    onError(new Error('Google Identity Services SDK লোড হতে পারেনি। ইন্টারনেট বা Ad-blocker চেক করুন।'));
+    return;
+  }
+
   try {
-    const tokenClient = window.google.accounts.oauth2.initTokenClient({
+    const tokenClient = oauth2.initTokenClient({
       client_id: clientId.trim(),
       scope: GOOGLE_OAUTH_SCOPES,
       prompt: 'select_account',

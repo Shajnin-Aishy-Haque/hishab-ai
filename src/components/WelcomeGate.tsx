@@ -1,46 +1,109 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { UserProfile } from '../types';
+import { isValidEmail } from '../services/googleAuth';
 
 interface WelcomeGateProps {
   onGoogleSignIn: () => void;
   onDirectEmailSignIn: (email: string, name?: string, isNewSignup?: boolean) => void;
+  onGuestSignIn: () => void;
   savedUsers?: UserProfile[];
   onSelectSavedUser?: (user: UserProfile) => void;
-  onDeleteSavedUser?: (userId: string) => void;
+  onDeleteSavedUser?: (userId: string, purgeData: boolean) => void;
   isLoading?: boolean;
+  authError?: { title: string; message: string } | null;
+  onClearAuthError?: () => void;
 }
 
 export const WelcomeGate: React.FC<WelcomeGateProps> = ({
   onGoogleSignIn,
   onDirectEmailSignIn,
+  onGuestSignIn,
   savedUsers = [],
   onSelectSavedUser,
   onDeleteSavedUser,
-  isLoading = false
+  isLoading = false,
+  authError = null,
+  onClearAuthError
 }) => {
   const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signinEmail, setSigninEmail] = useState('');
+  const [validationError, setValidationError] = useState('');
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  // Deletion Modal State
+  const [profileToDelete, setProfileToDelete] = useState<UserProfile | null>(null);
+
+  // Track online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Clear errors when switching tabs
+  useEffect(() => {
+    setValidationError('');
+    if (onClearAuthError) onClearAuthError();
+  }, [authMode]);
 
   const handleSignupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (signupEmail.trim() && signupEmail.includes('@')) {
-      onDirectEmailSignIn(signupEmail.trim(), signupName.trim(), true);
+    setValidationError('');
+
+    const cleanEmail = signupEmail.trim().toLowerCase();
+    const cleanName = signupName.trim();
+
+    if (!cleanName || cleanName.length < 2) {
+      setValidationError('অনুগ্রহ করে আপনার নাম দিন (কমপক্ষে ২ অক্ষর)।');
+      return;
     }
+
+    if (!isValidEmail(cleanEmail)) {
+      setValidationError('সঠিক ইমেইল ফরম্যাট দিন (যেমন: name@gmail.com)।');
+      return;
+    }
+
+    // Check if account already exists on device
+    const existing = savedUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (existing) {
+      // Smoothly sign into existing account
+      onDirectEmailSignIn(cleanEmail, existing.name, false);
+      return;
+    }
+
+    onDirectEmailSignIn(cleanEmail, cleanName, true);
   };
 
   const handleSigninSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (signinEmail.trim() && signinEmail.includes('@')) {
-      onDirectEmailSignIn(signinEmail.trim(), undefined, false);
+    setValidationError('');
+
+    const cleanEmail = signinEmail.trim().toLowerCase();
+    if (!isValidEmail(cleanEmail)) {
+      setValidationError('সঠিক ইমেইল ফরম্যাট দিন (যেমন: yourname@gmail.com)।');
+      return;
     }
+
+    const existing = savedUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (!existing) {
+      setValidationError('এই ডিভাইসে এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি। "Create Account" বেছে নিন।');
+      return;
+    }
+
+    onDirectEmailSignIn(cleanEmail, existing.name, false);
   };
 
   return (
-    <div className="min-h-screen bg-[#ffffff] dark:bg-[#131314] text-[#1f1f1f] dark:text-[#e3e3e3] flex flex-col items-center justify-between p-5 select-none font-google">
+    <div className="min-h-screen bg-[#ffffff] dark:bg-[#131314] text-[#1f1f1f] dark:text-[#e3e3e3] flex flex-col items-center justify-between p-4 sm:p-5 select-none font-google">
       {/* Top Brand Bar */}
-      <div className="w-full max-w-md flex items-center justify-between pt-2">
+      <div className="w-full max-w-md flex items-center justify-between pt-1">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-2xl bg-[#0b57d0]/10 dark:bg-[#a8c7fa]/15 flex items-center justify-center text-[#0b57d0] dark:text-[#a8c7fa] font-bold">
             <span className="material-symbols-outlined text-[22px]">account_balance_wallet</span>
@@ -50,16 +113,20 @@ export const WelcomeGate: React.FC<WelcomeGateProps> = ({
             <span className="text-[10px] text-neutral-400 font-medium">Personal Finance &amp; Dhar</span>
           </div>
         </div>
+
+        {/* Network Badge */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 text-[11px] text-neutral-500 font-medium">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Cloudflare Live</span>
+          <span
+            className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}
+          ></span>
+          <span>{isOnline ? 'Cloudflare Live' : 'Offline Ready'}</span>
         </div>
       </div>
 
       {/* Main Content Box */}
-      <div className="w-full max-w-md flex flex-col items-center text-center my-auto py-4">
+      <div className="w-full max-w-md flex flex-col items-center text-center my-auto py-3">
         {/* Animated Brand Emblem */}
-        <div className="relative mb-3">
+        <div className="relative mb-2.5">
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-[#0b57d0] via-[#1a73e8] to-[#4285f4] shadow-xl flex items-center justify-center text-white text-3xl sm:text-4xl font-extrabold ring-4 ring-blue-500/20">
             ৳
           </div>
@@ -73,27 +140,62 @@ export const WelcomeGate: React.FC<WelcomeGateProps> = ({
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 mb-1">
+        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 mb-0.5">
           Hishab AI
         </h1>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xs leading-relaxed mb-4">
-          Personal Spending &amp; Dhar Khata with 1-Click Google Drive Sync
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xs leading-relaxed mb-3">
+          Bangladesh-focused Smart Finance &amp; Dhar Khata with 1-Click Google Drive Sync
         </p>
 
+        {/* Offline Banner if disconnected */}
+        {!isOnline && (
+          <div className="w-full mb-3 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-left text-[11px] flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] shrink-0">wifi_off</span>
+            <span>অফলাইন মোড সক্রিয়: আপনার লোকাল ডাটা ডিভাইসে সম্পূর্ণ নিরাপদ রয়েছে।</span>
+          </div>
+        )}
+
         {/* Feature Highlights Pills */}
-        <div className="w-full grid grid-cols-2 gap-2 mb-4 text-left">
+        <div className="w-full grid grid-cols-2 gap-2 mb-3.5 text-left">
           <div className="p-2.5 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5 flex flex-col gap-0.5">
-            <span className="text-sm">🔒 100% Private</span>
-            <span className="text-[10px] text-neutral-500 leading-tight">প্রতি ইউজারের ডাটা সম্পূর্ণ আলাদা ও নিজস্ব ক্লাউডে</span>
+            <span className="text-xs font-semibold flex items-center gap-1">
+              <span>🔒</span> 100% Private
+            </span>
+            <span className="text-[10px] text-neutral-500 leading-tight">প্রতি ইউজারের ডাটা আলাদা ও নিজস্ব লোকাল স্টোরেজে সংরক্ষিত</span>
           </div>
           <div className="p-2.5 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5 flex flex-col gap-0.5">
-            <span className="text-sm">☁️ Auto-Sync</span>
-            <span className="text-[10px] text-neutral-500 leading-tight">নতুন একাউন্টে ফ্রেশ ৳০ দিয়ে শুরু, Drive-এ ব্যাকআপ</span>
+            <span className="text-xs font-semibold flex items-center gap-1">
+              <span>☁️</span> Drive Cloud Sync
+            </span>
+            <span className="text-[10px] text-neutral-500 leading-tight">নতুন একাউন্টে ফ্রেশ ৳০ দিয়ে শুরু, Drive-এ 1-Click ব্যাকআপ</span>
           </div>
         </div>
 
+        {/* Error Notification Banner */}
+        {(authError || validationError) && (
+          <div className="w-full mb-3 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-left text-xs flex items-start justify-between gap-2 animate-in fade-in duration-150">
+            <div className="flex items-start gap-2">
+              <span className="material-symbols-outlined text-[18px] shrink-0 mt-0.5">error</span>
+              <div>
+                <div className="font-bold text-[11px]">{authError?.title || 'ইনপুট ত্রুটি'}</div>
+                <div className="text-[11px] opacity-90 leading-tight">{validationError || authError?.message}</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setValidationError('');
+                if (onClearAuthError) onClearAuthError();
+              }}
+              className="text-red-500 hover:text-red-700 dark:hover:text-red-300"
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+        )}
+
         {/* Main Action Container */}
-        <div className="w-full flex flex-col gap-3">
+        <div className="w-full flex flex-col gap-2.5">
           {/* 1-Click Native Google Sign-In */}
           <button
             type="button"
@@ -113,7 +215,7 @@ export const WelcomeGate: React.FC<WelcomeGateProps> = ({
                 </svg>
               </div>
             )}
-            <span>Sign in with Google</span>
+            <span>{isLoading ? 'Google-এ সংযোগ হচ্ছে...' : 'Sign in with Google (Chrome 1-Click)'}</span>
           </button>
 
           {/* Divider */}
@@ -173,7 +275,7 @@ export const WelcomeGate: React.FC<WelcomeGateProps> = ({
                 <input
                   type="email"
                   required
-                  placeholder="name@gmail.com or work email"
+                  placeholder="name@gmail.com"
                   value={signupEmail}
                   onChange={(e) => setSignupEmail(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/15 text-xs text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#1a73e8]"
@@ -204,7 +306,7 @@ export const WelcomeGate: React.FC<WelcomeGateProps> = ({
                   <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
                     Saved on this Device:
                   </span>
-                  <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-0.5">
+                  <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-0.5">
                     {savedUsers.map((u) => (
                       <div
                         key={u.id}
@@ -215,15 +317,21 @@ export const WelcomeGate: React.FC<WelcomeGateProps> = ({
                           className="flex items-center gap-2.5 flex-1 cursor-pointer"
                         >
                           {u.avatarUrl ? (
-                            <img src={u.avatarUrl} alt={u.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                            <img src={u.avatarUrl} alt={u.name} className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-black/10 dark:ring-white/10" />
                           ) : (
-                            <div className="w-7 h-7 rounded-full bg-[#1a73e8] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-[#1a73e8] text-white text-[12px] font-bold flex items-center justify-center shrink-0">
                               {u.initial || u.name.charAt(0).toUpperCase()}
                             </div>
                           )}
                           <div className="overflow-hidden">
-                            <div className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate">
-                              {u.name}
+                            <div className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate flex items-center gap-1.5">
+                              <span>{u.name}</span>
+                              {u.authProvider === 'google' && (
+                                <span className="text-[9px] px-1.5 py-0.2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-md font-medium">Google</span>
+                              )}
+                              {u.isDemo && (
+                                <span className="text-[9px] px-1.5 py-0.2 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-md font-medium">Demo</span>
+                              )}
                             </div>
                             <div className="text-[10px] text-neutral-400 truncate">{u.email}</div>
                           </div>
@@ -233,18 +341,18 @@ export const WelcomeGate: React.FC<WelcomeGateProps> = ({
                           <button
                             type="button"
                             onClick={() => onSelectSavedUser(u)}
-                            className="text-xs font-bold text-[#1a73e8] px-2 py-1 rounded-lg hover:bg-blue-500/10"
+                            className="text-xs font-bold text-[#1a73e8] px-2.5 py-1 rounded-lg hover:bg-blue-500/10 transition-colors"
                           >
                             Open →
                           </button>
                           {onDeleteSavedUser && (
                             <button
                               type="button"
-                              onClick={() => onDeleteSavedUser(u.id)}
-                              className="w-6 h-6 rounded-md hover:bg-red-500/10 text-neutral-400 hover:text-red-500 flex items-center justify-center"
-                              title="Remove from device"
+                              onClick={() => setProfileToDelete(u)}
+                              className="w-7 h-7 rounded-lg hover:bg-red-500/10 text-neutral-400 hover:text-red-500 flex items-center justify-center transition-colors"
+                              title="Delete or remove profile"
                             >
-                              <span className="material-symbols-outlined text-[15px]">close</span>
+                              <span className="material-symbols-outlined text-[16px]">close</span>
                             </button>
                           )}
                         </div>
@@ -279,11 +387,73 @@ export const WelcomeGate: React.FC<WelcomeGateProps> = ({
               </form>
             </div>
           )}
+
+          {/* 1-Tap Explore as Demo / Guest Mode Button */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={onGuestSignIn}
+              disabled={isLoading}
+              className="w-full py-2.5 px-3.5 rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-600 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.04] dark:hover:bg-white/[0.04] text-neutral-700 dark:text-neutral-300 flex items-center justify-center gap-2 text-xs font-semibold tap-press transition-colors cursor-pointer"
+            >
+              <span className="text-base">🚀</span>
+              <span>Explore as Guest / Demo Mode (গেস্ট হিসেবে দেখুন)</span>
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Confirmation Modal for Profile Deletion */}
+      {profileToDelete && onDeleteSavedUser && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#1e1f20] rounded-3xl max-w-sm w-full p-5 flex flex-col gap-3 shadow-2xl border border-black/10 dark:border-white/10 text-left">
+            <div className="flex items-center gap-2.5 text-amber-600 dark:text-amber-400">
+              <span className="material-symbols-outlined text-[24px]">warning</span>
+              <h3 className="text-sm font-bold">প্রোফাইল সরানোর অপশন</h3>
+            </div>
+            <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
+              আপনি <strong>{profileToDelete.name}</strong> ({profileToDelete.email}) প্রোফাইলটি মুছে ফেলতে যাচ্ছেন। কোন অপশনটি বেছে নিতে চান?
+            </p>
+
+            <div className="flex flex-col gap-2 mt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  onDeleteSavedUser(profileToDelete.id, false);
+                  setProfileToDelete(null);
+                }}
+                className="w-full py-2.5 px-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-neutral-800 dark:text-neutral-200 text-xs font-semibold text-left flex items-center justify-between"
+              >
+                <span>ডিভাইস লিস্ট থেকে সরান (ডাটা সংরক্ষিত থাকবে)</span>
+                <span className="material-symbols-outlined text-[16px]">visibility_off</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onDeleteSavedUser(profileToDelete.id, true);
+                  setProfileToDelete(null);
+                }}
+                className="w-full py-2.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/15 text-red-600 dark:text-red-400 text-xs font-semibold text-left flex items-center justify-between"
+              >
+                <span>ডাটা সহ স্থায়ীভাবে ডিলিট করুন (Purge all data)</span>
+                <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setProfileToDelete(null)}
+                className="w-full py-2 rounded-xl text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 text-xs font-medium text-center mt-1"
+              >
+                বাতিল করুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
-      <div className="w-full max-w-md pt-3 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[11px] text-neutral-400">
+      <div className="w-full max-w-md pt-2 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[11px] text-neutral-400">
         <span>Hishab AI • Nafis Walid</span>
         <div className="flex gap-2 font-medium">
           <span>100% Free &amp; Private</span>

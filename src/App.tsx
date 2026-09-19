@@ -1,14 +1,34 @@
 import { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, initializeUserData, DEFAULT_USER, resetUserDataToScratch, updateStartingBalances } from './db/db';
-import type { Account, Category, DharItem, Transaction, UserProfile, TransactionType, DharType, DharPaymentLog } from './types';
+import {
+  db,
+  initializeUserData,
+  DEFAULT_USER,
+  GUEST_DEMO_USER,
+  resetUserDataToScratch,
+  updateStartingBalances,
+  resolveOrLinkUser,
+  purgeUserProfileAndData
+} from './db/db';
+import type {
+  Account,
+  Category,
+  DharItem,
+  Transaction,
+  UserProfile,
+  TransactionType,
+  DharType,
+  DharPaymentLog
+} from './types';
 import type { ParsedExpense } from './services/nlpParser';
 import type { ScanReceiptResult } from './services/geminiVision';
 import {
   getStoredAccessToken,
   getStoredGoogleClientId,
   requestRealGoogleOAuth,
-  clearGoogleSession
+  clearGoogleSession,
+  silentRefreshAccessToken,
+  formatGoogleAuthError
 } from './services/googleAuth';
 import {
   uploadToGoogleDrive,
@@ -84,6 +104,7 @@ export function App() {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [onboardingUser, setOnboardingUser] = useState<UserProfile | null>(null);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [authError, setAuthError] = useState<{ title: string; message: string } | null>(null);
 
   // Sync animation text
   const [syncText, setSyncText] = useState('Drive: Auto-Synced');
@@ -110,11 +131,32 @@ export function App() {
     localStorage.setItem('hishab_theme', theme);
   }, [theme]);
 
-  // Initialize DB for current user on boot or switch
+  // Initialize DB for current user on boot or switch - ONLY when authenticated
   useEffect(() => {
-    initializeUserData(currentUser.id).catch((err) => console.error('DB Init Error:', err));
+    if (!isLoggedIn) return; // Strict security & hygiene: never mutate DB for unauthenticated visitors
+    initializeUserData(currentUser.id, !currentUser.isDemo).catch((err) =>
+      console.error('DB Init Error:', err)
+    );
     localStorage.setItem('hishab_active_user', JSON.stringify(currentUser));
-  }, [currentUser]);
+  }, [currentUser, isLoggedIn]);
+
+  // Multi-tab Storage Synchronization
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'hishab_is_logged_in') {
+        setIsLoggedIn(e.newValue === 'true');
+      }
+      if (e.key === 'hishab_active_user' && e.newValue) {
+        try {
+          setCurrentUser(JSON.parse(e.newValue));
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Reactive DB Queries scoped to currentUser.id
   const transactions =
@@ -141,12 +183,21 @@ export function App() {
       [currentUser.id]
     ) || [];
 
-  const allUsers = useLiveQuery(() => db.users.toArray(), []) || [DEFAULT_USER];
+  // All users saved on this device (No hardcoded fallback to prevent leak on unauthenticated devices)
+  const allUsers = useLiveQuery(() => db.users.toArray(), []) || [];
 
-  // Background Google Drive Auto-Sync Engine
+  // Background Google Drive Auto-Sync Engine with Silent Refresh
   const backgroundSyncToDrive = async () => {
-    const token = getStoredAccessToken();
+    let token = getStoredAccessToken();
+    if (!token) {
+      // If user is Google authenticated, attempt silent token refresh
+      if (currentUser.authProvider === 'google') {
+        const clientId = getStoredGoogleClientId();
+        token = await silentRefreshAccessToken(clientId);
+      }
+    }
     if (!token) return;
+
     try {
       setSyncText('Syncing to Drive...');
       const snapshot = await createDatabaseSnapshot(currentUser.id);
@@ -160,7 +211,12 @@ export function App() {
 
   // Manual Trigger Google Drive Sync
   const handleTriggerSync = async () => {
-    const token = getStoredAccessToken();
+    let token = getStoredAccessToken();
+    if (!token) {
+      const clientId = getStoredGoogleClientId();
+      token = await silentRefreshAccessToken(clientId);
+    }
+
     if (!token) {
       setIsGoogleAuthModalOpen(true);
       showToast('Google Drive সিঙ্ক করতে 1-Click সাইন-ইন করুন', 'cloud');
@@ -175,7 +231,7 @@ export function App() {
       showToast('Google Drive-এ ক্লাউড ব্যাকআপ সফলভাবে সিঙ্ক হয়েছে!', 'cloud_done');
     } catch (err: any) {
       console.error(err);
-      if (err.message?.includes('expired')) {
+      if (err.message?.includes('expired') || err.message?.includes('401')) {
         setIsGoogleAuthModalOpen(true);
         showToast('Google Drive সেশনের মেয়াদ শেষ! পুনরায় সাইন-ইন করুন।', 'error');
       } else {
@@ -184,6 +240,7 @@ export function App() {
       setSyncText('Drive: Error');
     }
   };
+
   // Debounced auto-sync when transactions or accounts mutate
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -207,26 +264,31 @@ export function App() {
   const handleGoogleSignIn = () => {
     const clientId = getStoredGoogleClientId();
     if (!clientId) {
-      showToast('Google Client ID পাওয়া যায়নি।', 'error');
+      setAuthError({
+        title: 'Missing Client ID',
+        message: 'Google Client ID পাওয়া যায়নি। অনুগ্রহ করে সেটিংস থেকে সেট করুন।'
+      });
       return;
     }
 
     setIsGoogleSigningIn(true);
+    setAuthError(null);
+
     requestRealGoogleOAuth(
       clientId,
       async (userInfo, accessToken) => {
         setIsGoogleSigningIn(false);
         try {
-          const userProfile: UserProfile = {
-            id: `google_${userInfo.sub}`,
-            name: userInfo.name,
+          // Centralized account linking: merges with local profile if matching email exists
+          const { user: linkedUser, isNewlyCreated } = await resolveOrLinkUser({
             email: userInfo.email,
+            name: userInfo.name,
             avatarUrl: userInfo.picture,
-            initial: (userInfo.name || 'U').charAt(0).toUpperCase()
-          };
+            googleSub: userInfo.sub,
+            authProvider: 'google'
+          });
 
-          await db.users.put(userProfile);
-          await initializeUserData(userProfile.id, true);
+          await initializeUserData(linkedUser.id, isNewlyCreated);
 
           let hasRestoredBackup = false;
           // Check if Google Drive has existing backup
@@ -237,11 +299,11 @@ export function App() {
               const backupData = await downloadFromGoogleDrive(accessToken, existingFile.id);
               const blob = new Blob([JSON.stringify(backupData)], { type: 'application/json' });
               const file = new File([blob], 'drive_backup.json');
-              await importBackupFile(file, userProfile.id);
+              await importBackupFile(file, linkedUser.id);
               hasRestoredBackup = true;
               showToast('Google Drive ব্যাকআপ রিস্টোর সম্পন্ন!', 'cloud_download');
             } else {
-              const snapshot = await createDatabaseSnapshot(userProfile.id);
+              const snapshot = await createDatabaseSnapshot(linkedUser.id);
               await uploadToGoogleDrive(accessToken, snapshot);
               setSyncText('Drive: Synced');
             }
@@ -249,72 +311,92 @@ export function App() {
             console.warn('Drive initial sync notice:', driveErr);
           }
 
-          setCurrentUser(userProfile);
-          localStorage.setItem('hishab_active_user', JSON.stringify(userProfile));
+          setCurrentUser(linkedUser);
+          localStorage.setItem('hishab_active_user', JSON.stringify(linkedUser));
           localStorage.setItem('hishab_is_logged_in', 'true');
           setIsLoggedIn(true);
 
-          if (!hasRestoredBackup) {
-            setOnboardingUser(userProfile);
+          if (isNewlyCreated && !hasRestoredBackup) {
+            setOnboardingUser(linkedUser);
             setIsOnboardingOpen(true);
-            showToast(`স্বাগতম, ${userProfile.name}! ওয়ালেট ব্যালেন্স সেট করুন।`, 'person_add');
+            showToast(`স্বাগতম, ${linkedUser.name}! ওয়ালেট ব্যালেন্স সেট করুন।`, 'person_add');
           } else {
-            showToast(`স্বাগতম, ${userProfile.name}! হিসাব প্রস্তুত।`, 'cloud_done');
+            showToast(`স্বাগতম, ${linkedUser.name}! হিসাব প্রস্তুত।`, 'cloud_done');
           }
         } catch (err: any) {
-          showToast(`লগইন ব্যর্থ: ${err?.message || 'অজানা ত্রুটি'}`, 'error');
+          const formatted = formatGoogleAuthError(err);
+          setAuthError(formatted);
+          showToast(formatted.message, 'error');
         }
       },
       (err: any) => {
         setIsGoogleSigningIn(false);
-        if (err?.error === 'popup_closed_by_user') {
-          showToast('সাইন-ইন উইন্ডো বন্ধ করা হয়েছে', 'info');
-        } else {
-          showToast(`Google Sign-In Error: ${err?.message || err}`, 'error');
-        }
+        const formatted = formatGoogleAuthError(err);
+        setAuthError(formatted);
+        showToast(formatted.message, 'error');
       }
     );
   };
 
   const handleEmailAuth = async (email: string, name?: string, isNewSignup = false) => {
-    const cleanEmail = email.trim().toLowerCase();
-    let formattedName = name?.trim();
-    if (!formattedName) {
-      formattedName = (cleanEmail.split('@')[0] || 'User')
-        .replace(/[._-]/g, ' ')
-        .split(' ')
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(' ');
-    }
-    const userId = `user_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`;
+    setAuthError(null);
+    try {
+      const { user: profile, isNewlyCreated } = await resolveOrLinkUser({
+        email,
+        name,
+        authProvider: 'email'
+      });
 
-    const existingUser = await db.users.get(userId);
-    const userProfile: UserProfile = existingUser || {
-      id: userId,
-      name: formattedName,
-      email: cleanEmail,
-      initial: formattedName.charAt(0).toUpperCase()
-    };
+      await initializeUserData(profile.id, isNewlyCreated);
+      setCurrentUser(profile);
+      localStorage.setItem('hishab_active_user', JSON.stringify(profile));
+      localStorage.setItem('hishab_is_logged_in', 'true');
+      setIsLoggedIn(true);
 
-    await db.users.put(userProfile);
-    await initializeUserData(userId, !existingUser);
-    setCurrentUser(userProfile);
-    localStorage.setItem('hishab_active_user', JSON.stringify(userProfile));
-    localStorage.setItem('hishab_is_logged_in', 'true');
-    setIsLoggedIn(true);
-
-    if (isNewSignup || !existingUser) {
-      setOnboardingUser(userProfile);
-      setIsOnboardingOpen(true);
-      showToast(`স্বাগতম, ${userProfile.name}! ওয়ালেট সাজিয়ে নিন।`, 'person_add');
-    } else {
-      showToast(`স্বাগতম, ${userProfile.name}!`, 'check_circle');
+      if (isNewlyCreated || isNewSignup) {
+        setOnboardingUser(profile);
+        setIsOnboardingOpen(true);
+        showToast(`স্বাগতম, ${profile.name}! ওয়ালেট সাজিয়ে নিন।`, 'person_add');
+      } else {
+        showToast(`স্বাগতম, ${profile.name}!`, 'check_circle');
+      }
+    } catch (err: any) {
+      showToast(`লগইন ব্যর্থ: ${err.message}`, 'error');
     }
   };
 
-  const handleDeleteSavedUser = async (userId: string) => {
-    await db.users.delete(userId);
-    showToast('প্রোফাইল ডিভাইস থেকে সরানো হয়েছে', 'delete');
+  const handleGuestSignIn = async () => {
+    setAuthError(null);
+    try {
+      const guestUser = GUEST_DEMO_USER;
+      await db.users.put(guestUser);
+      await initializeUserData(guestUser.id, false); // Seeds realistic demo accounts & transactions
+      setCurrentUser(guestUser);
+      localStorage.setItem('hishab_active_user', JSON.stringify(guestUser));
+      localStorage.setItem('hishab_is_logged_in', 'true');
+      setIsLoggedIn(true);
+      showToast('গেস্ট মোডে স্বাগতম! হিসাবের ডেমো ডাটা প্রস্তুত।', 'rocket_launch');
+    } catch (err: any) {
+      showToast(`গেস্ট লগইন ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
+  const handleDeleteSavedUser = async (userId: string, purgeData = false) => {
+    try {
+      if (purgeData) {
+        await purgeUserProfileAndData(userId);
+        showToast('প্রোফাইল এবং সকল লোকাল ডাটা স্থায়ীভাবে মোছা হয়েছে।', 'delete_forever');
+      } else {
+        await db.users.delete(userId);
+        showToast('প্রোফাইল ডিভাইস থেকে সরানো হয়েছে।', 'delete');
+      }
+
+      if (currentUser.id === userId) {
+        handleSignOut();
+      }
+    } catch (err: any) {
+      showToast(`মুছতে ব্যর্থ: ${err.message}`, 'error');
+    }
   };
 
   const handleSignOut = () => {
@@ -512,13 +594,10 @@ export function App() {
 
       const acc = accounts.find((a) => a.id === accountId);
       if (acc) {
-        // If Pabo: someone paid me back -> income into wallet (+settleAmount)
-        // If Debo: I paid them back -> expense from wallet (-settleAmount)
         const delta = item.type === 'pabo' ? settleAmount : -settleAmount;
         await db.accounts.update(accountId, { balance: acc.balance + delta });
       }
 
-      // Record matching transaction in transaction feed
       await db.transactions.add({
         userId: currentUser.id,
         type: item.type === 'pabo' ? 'income' : 'expense',
@@ -565,8 +644,6 @@ export function App() {
 
       const acc = accounts.find((a) => a.id === accountId);
       if (acc) {
-        // If Pabo: gave more loan money out (-addAmount)
-        // If Debo: borrowed more loan money in (+addAmount)
         const delta = item.type === 'pabo' ? -addAmount : addAmount;
         await db.accounts.update(accountId, { balance: acc.balance + delta });
       }
@@ -626,8 +703,6 @@ export function App() {
 
       const acc = accounts.find((a) => a.id === data.accountId);
       if (acc) {
-        // If Pabo: gave money out (-amount)
-        // If Debo: borrowed money in (+amount)
         const delta = data.type === 'pabo' ? -data.amount : data.amount;
         await db.accounts.update(data.accountId, { balance: acc.balance + delta });
       }
@@ -681,9 +756,10 @@ export function App() {
     const timeStr = getLocalTimeString();
     const dateStr = result.date || getLocalDateString();
 
-    const note = result.items.length > 0
-      ? `${result.shopName} (${result.items.map((i) => i.name).join(', ').slice(0, 30)}...)`
-      : result.shopName;
+    const note =
+      result.items.length > 0
+        ? `${result.shopName} (${result.items.map((i) => i.name).join(', ').slice(0, 30)}...)`
+        : result.shopName;
 
     const cashAcc = accounts.find((a) => a.type === 'cash') || accounts[0];
     const accId = cashAcc?.id || `cash_${currentUser.id}`;
@@ -721,6 +797,7 @@ export function App() {
         <WelcomeGate
           onGoogleSignIn={handleGoogleSignIn}
           onDirectEmailSignIn={handleEmailAuth}
+          onGuestSignIn={handleGuestSignIn}
           savedUsers={allUsers}
           onSelectSavedUser={(u) => {
             setCurrentUser(u);
@@ -731,6 +808,8 @@ export function App() {
           }}
           onDeleteSavedUser={handleDeleteSavedUser}
           isLoading={isGoogleSigningIn}
+          authError={authError}
+          onClearAuthError={() => setAuthError(null)}
         />
       </>
     );
@@ -752,6 +831,23 @@ export function App() {
           syncText={syncText}
           isDriveConnected={!!getStoredAccessToken()}
         />
+
+        {/* Guest / Demo Notice Banner */}
+        {currentUser.isDemo && (
+          <div className="bg-purple-500/10 border-b border-purple-500/20 px-4 py-2 flex items-center justify-between text-xs text-purple-700 dark:text-purple-300 animate-in fade-in duration-150">
+            <div className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px]">rocket_launch</span>
+              <span>গেস্ট মোডে আছেন • ক্লাউড সিঙ্কের জন্য Google লিঙ্ক করুন</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsGoogleAuthModalOpen(true)}
+              className="font-bold underline text-[11px] hover:opacity-80 cursor-pointer"
+            >
+              Sign in
+            </button>
+          </div>
+        )}
 
         {/* 2. Main Views according to activeTab */}
         {activeTab === 'hishab' && (

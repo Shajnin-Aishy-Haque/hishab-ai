@@ -73,9 +73,19 @@ Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata
 - [x] **Native bKash & Nagad SMS Recognition**: Users can copy-paste real transaction SMS messages (e.g. `Payment Tk 350.00 to ...`, `Cash Out Tk 1,000`, `Cash In of Tk 2,500`, `TxnID`, `TrxID`).
 - [x] **Safe Extraction**: Isolates actual spent amount without mistaking Fee, Balance, or phone numbers for the primary transaction value.
 
+### Phase 11: Enterprise-Grade Authentication & Login System Refactor
+- [x] **Resilient Google Identity Services (GIS) Async Loader**: Added `ensureGoogleSdkLoaded()` with graceful polling, dynamic script injection, and timeout protection, eliminating race condition initialization failures.
+- [x] **Silent Token Refresh Engine**: Integrated `silentRefreshAccessToken()` utilizing GIS `prompt: ''` to automatically re-authorize Google Drive tokens in the background, eliminating sudden 1-hour session drops.
+- [x] **Centralized Account Linking & ID Preservation**: Added `resolveOrLinkUser()` to link Google OAuth credentials with pre-existing local email profiles, preventing account duplication and orphaned data loss.
+- [x] **Unauthenticated State Isolation**: Guarded database mutations so unauthenticated visitors never leak or seed `DEFAULT_USER` into local Dexie IndexedDB.
+- [x] **1-Tap Guest / Demo Mode**: Added instant exploration mode with pre-seeded realistic Bangladesh financial data (Cash, bKash, Nagad, City Bank, bazaar expenses, and Dhar Khata) without requiring login.
+- [x] **RFC 5322 Standard Email Validation**: Replaced naive email checking with comprehensive regex and inline Banglish validation prompts.
+- [x] **Safe Cascading User Deletion**: Implemented `purgeUserProfileAndData()` for atomic deletion across all IndexedDB tables, eliminating orphaned database bloat.
+- [x] **Multi-Tab Session Sync**: Added `StorageEvent` synchronization so login/logout actions update instantly across all open browser tabs.
+
 ---
 
-## 3. Automated Test Suite Status (33 Tests Passing)
+## 3. Automated Test Suite Status (38 Tests Passing)
 ```
 ✔ reconciles same account expense adjustment (increasing amount)
 ✔ reconciles same account expense adjustment (decreasing amount)
@@ -83,6 +93,11 @@ Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata
 ✔ computes savings rate and cashflow net correctly
 ✔ computes weekly breakdown buckets correctly for a month
 ✔ identifies over-budget status and remaining amounts correctly
+✔ validates emails correctly according to RFC 5322 rules
+✔ formats Google OAuth errors into user-friendly actionable feedback
+✔ ensures token expiry validation handles 60-second safety buffer correctly
+✔ verifies email normalization and deterministic user ID creation
+✔ preserves user ID when account linking existing local user with Google credentials
 ✔ getLocalDateString returns valid YYYY-MM-DD formatted string in local time
 ✔ getLocalTimeString returns 12-hour formatted time with AM/PM
 ✔ isToday returns true for current date and false for other dates
@@ -110,7 +125,7 @@ Hishab AI is a zero-cost, privacy-first personal spending tracker and Dhar Khata
 ✔ parses Nagad payment SMS correctly
 ✔ parses Nagad Cash In SMS as income correctly
 ✔ parses Bank Card SMS correctly
-Total: 33 passed, 0 failed (Execution: ~104ms).
+Total: 38 passed, 0 failed (Execution: ~105ms).
 ```
 
 ---
@@ -118,4 +133,4 @@ Total: 33 passed, 0 failed (Execution: ~104ms).
 ## 4. Production Deployment Status
 - **Git Repo:** `https://github.com/Shajnin-Aishy-Haque/hishab-ai`
 - **Cloudflare Pages Production:** `https://hishab-ai.pages.dev`
-- **Current Release:** v2.0.0 Stable (Commit verified & deployed)
+- **Current Release:** v2.1.0 (Enterprise Authentication & Login Upgrade)

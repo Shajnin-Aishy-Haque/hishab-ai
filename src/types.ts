@@ -1,4 +1,5 @@
 export type TransactionType = 'expense' | 'income' | 'transfer';
+export type AuthProviderType = 'google' | 'email' | 'guest';
 
 export interface UserProfile {
   id: string;
@@ -6,6 +7,11 @@ export interface UserProfile {
   email: string;
   avatarUrl?: string;
   initial: string;
+  authProvider?: AuthProviderType;
+  googleSub?: string;
+  createdAt?: number;
+  lastLoginAt?: number;
+  isDemo?: boolean;
 }
 
 export interface Transaction {

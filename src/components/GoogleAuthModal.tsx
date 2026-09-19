@@ -5,7 +5,10 @@ import {
   setStoredGoogleClientId,
   requestRealGoogleOAuth,
   getStoredAccessToken,
-  clearGoogleSession
+  clearGoogleSession,
+  formatGoogleAuthError,
+  isValidEmail,
+  silentRefreshAccessToken
 } from '../services/googleAuth';
 import {
   uploadToGoogleDrive,
@@ -13,6 +16,7 @@ import {
   downloadFromGoogleDrive
 } from '../services/googleDriveApi';
 import { createDatabaseSnapshot, importBackupFile } from '../services/driveSync';
+import { resolveOrLinkUser, purgeUserProfileAndData } from '../db/db';
 
 interface GoogleAuthModalProps {
   isOpen: boolean;
@@ -45,6 +49,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isDriveSyncing, setIsDriveSyncing] = useState(false);
   const [driveStatus, setDriveStatus] = useState<string>('Connected');
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const hasAccessToken = !!getStoredAccessToken();
 
   useEffect(() => {
@@ -70,35 +75,33 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
       async (userInfo, accessToken) => {
         try {
           setIsLoading(false);
-          const userId = `google_${userInfo.sub}`;
-          const existingUser = users.find((u) => u.id === userId || u.email === userInfo.email);
 
-          const profile: UserProfile = {
-            id: userId,
-            name: userInfo.name,
+          // Use centralized account linking: links with existing local user if same email
+          const { user: linkedUser, isNewlyCreated } = await resolveOrLinkUser({
             email: userInfo.email,
+            name: userInfo.name,
             avatarUrl: userInfo.picture,
-            initial: userInfo.name.charAt(0).toUpperCase()
-          };
+            googleSub: userInfo.sub,
+            authProvider: 'google'
+          });
 
-          if (existingUser) {
-            onSwitchUser(existingUser);
-            onShowToast(`Google-এ সাইন-ইন সম্পন্ন: ${userInfo.name}`, 'cloud_done');
+          if (!isNewlyCreated) {
+            onSwitchUser(linkedUser);
+            onShowToast(`Google লিঙ্ক সম্পন্ন: ${linkedUser.name}`, 'cloud_done');
           } else {
-            // New user: initialized FROM SCRATCH
-            onAddUser(profile, true);
-            onSwitchUser(profile);
-            onShowToast(`নতুন অ্যাকাউন্ট তৈরি হয়েছে: ${userInfo.name}`, 'person_add');
-            onOpenOnboarding(profile);
+            onAddUser(linkedUser, true);
+            onSwitchUser(linkedUser);
+            onShowToast(`নতুন অ্যাকাউন্ট তৈরি হয়েছে: ${linkedUser.name}`, 'person_add');
+            onOpenOnboarding(linkedUser);
           }
 
           // Check if user already has an existing backup in Google Drive
           try {
-            setDriveStatus('Checking Google Drive backup...');
+            setDriveStatus('Checking Google Drive...');
             const existingBackup = await findDriveBackupFile(accessToken);
             if (existingBackup) {
               const confirmRestore = window.confirm(
-                `Google Drive-এ আগের ব্যাকআপ ফাইল পাওয়া গেছে (Last saved: ${new Date(
+                `Google Drive-এ ব্যাকআপ ফাইল পাওয়া গেছে (Last modified: ${new Date(
                   existingBackup.modifiedTime
                 ).toLocaleDateString()})। রিস্টোর করবেন?`
               );
@@ -106,12 +109,12 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 const snapshot = await downloadFromGoogleDrive(accessToken, existingBackup.id);
                 const blob = new Blob([JSON.stringify(snapshot)], { type: 'application/json' });
                 const file = new File([blob], 'drive_backup.json');
-                await importBackupFile(file, userId);
+                await importBackupFile(file, linkedUser.id);
                 onShowToast('Google Drive ব্যাকআপ সফলভাবে রিস্টোর হয়েছে!', 'cloud_download');
               }
             } else {
               // Automatically create initial backup on Google Drive
-              const snapshot = await createDatabaseSnapshot(userId);
+              const snapshot = await createDatabaseSnapshot(linkedUser.id);
               await uploadToGoogleDrive(accessToken, snapshot);
               setDriveStatus('Drive: Synced');
             }
@@ -122,16 +125,15 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
           onClose();
         } catch (err: any) {
           setIsLoading(false);
-          onShowToast(err.message || 'Google লগইন সম্পন্ন করতে সমস্যা হয়েছে', 'error');
+          const formatted = formatGoogleAuthError(err);
+          onShowToast(formatted.message, 'error');
         }
       },
       (err: any) => {
         setIsLoading(false);
-        console.error('Google OAuth error:', err);
-        if (err?.error === 'popup_closed_by_user') {
-          onShowToast('Google সাইন-ইন উইন্ডো বন্ধ করা হয়েছে', 'info');
-        } else {
-          onShowToast(err?.message || 'Google OAuth ব্যর্থ হয়েছে। Client ID চেক করুন।', 'error');
+        const formatted = formatGoogleAuthError(err);
+        onShowToast(formatted.message, 'error');
+        if (formatted.code === 'POPUP_BLOCKED' || formatted.code === 'UNKNOWN_ERROR') {
           setShowConfig(true);
         }
       }
@@ -139,54 +141,62 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   };
 
   // Quick Start without GCP Setup (From Scratch)
-  const handleQuickScratchSignIn = (emailToUse?: string) => {
-    const targetEmail = (emailToUse || quickEmail).trim();
-    if (!targetEmail) return;
+  const handleQuickScratchSignIn = async (emailToUse?: string) => {
+    const targetEmail = (emailToUse || quickEmail).trim().toLowerCase();
+    if (!targetEmail || !isValidEmail(targetEmail)) {
+      onShowToast('সঠিক ইমেইল ফরম্যাট দিন (e.g. user@gmail.com)', 'error');
+      return;
+    }
 
     setIsLoading(true);
-    setTimeout(() => {
-      const username = targetEmail.split('@')[0] || 'User';
-      const formattedName = username
-        .replace(/[._-]/g, ' ')
-        .split(' ')
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(' ');
-
-      const userId = `user_${Date.now()}`;
-      const newUser: UserProfile = {
-        id: userId,
-        name: formattedName,
+    try {
+      const { user: newUser, isNewlyCreated } = await resolveOrLinkUser({
         email: targetEmail,
-        initial: formattedName.charAt(0).toUpperCase()
-      };
+        authProvider: 'email'
+      });
 
-      onAddUser(newUser, true);
-      onSwitchUser(newUser);
-      setIsLoading(false);
+      if (isNewlyCreated) {
+        onAddUser(newUser, true);
+        onSwitchUser(newUser);
+        onShowToast(`ফ্রেশ অ্যাকাউন্ট তৈরি হয়েছে: ${newUser.name}`, 'person_add');
+        onOpenOnboarding(newUser);
+      } else {
+        onSwitchUser(newUser);
+        onShowToast(`স্বাগতম, ${newUser.name}!`, 'check_circle');
+      }
+
       setQuickEmail('');
-      onShowToast(`ফ্রেশ অ্যাকাউন্ট তৈরি হয়েছে: ${newUser.name}`, 'person_add');
-      onOpenOnboarding(newUser);
       onClose();
-    }, 400);
+    } catch (err: any) {
+      onShowToast(`লগইন ব্যর্থ: ${err.message}`, 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Sync current user's data to Google Drive
   const handleSyncToDriveNow = async () => {
     const token = getStoredAccessToken();
     if (!token) {
-      handleRealGoogleSignIn();
-      return;
+      // Try silent refresh first before opening popup
+      const activeClientId = clientId.trim() || getStoredGoogleClientId();
+      const refreshed = await silentRefreshAccessToken(activeClientId);
+      if (!refreshed) {
+        handleRealGoogleSignIn();
+        return;
+      }
     }
 
     setIsDriveSyncing(true);
     try {
+      const activeToken = getStoredAccessToken()!;
       const snapshot = await createDatabaseSnapshot(currentUser.id);
-      await uploadToGoogleDrive(token, snapshot);
+      await uploadToGoogleDrive(activeToken, snapshot);
       onShowToast('Google Drive-এ ক্লাউড ব্যাকআপ সফল হয়েছে!', 'cloud_done');
       setDriveStatus('Synced just now');
     } catch (err: any) {
       console.error(err);
-      if (err.message?.includes('expired')) {
+      if (err.message?.includes('expired') || err.message?.includes('401')) {
         onShowToast('সেশনের মেয়াদ শেষ! পুনরায় Google সাইন-ইন করুন।', 'error');
         handleRealGoogleSignIn();
       } else {
@@ -205,9 +215,34 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     handleRealGoogleSignIn();
   };
 
+  const handleConfirmDeleteProfile = async (purgeData: boolean) => {
+    if (!userToDelete) return;
+    try {
+      if (purgeData) {
+        await purgeUserProfileAndData(userToDelete.id);
+        onShowToast(`${userToDelete.name}-এর সকল ডাটা সহ ডিলিট করা হয়েছে।`, 'delete_forever');
+      } else {
+        await purgeUserProfileAndData(userToDelete.id); // removes user entry
+        onShowToast(`${userToDelete.name} প্রোফাইল ডিভাইস থেকে সরানো হয়েছে।`, 'delete');
+      }
+
+      if (userToDelete.id === currentUser.id) {
+        const remaining = users.filter((u) => u.id !== userToDelete.id);
+        if (remaining.length > 0) {
+          onSwitchUser(remaining[0]);
+        } else if (onSignOut) {
+          onSignOut();
+        }
+      }
+      setUserToDelete(null);
+    } catch (err: any) {
+      onShowToast(`মুছতে ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-[#ffffff] dark:bg-[#1e1f20] rounded-[28px] max-w-md w-full p-6 flex flex-col shadow-2xl border border-black/10 dark:border-white/10 text-[#1f1f1f] dark:text-[#e3e3e3] overflow-hidden relative">
+      <div className="bg-[#ffffff] dark:bg-[#1e1f20] rounded-[28px] max-w-md w-full p-5 sm:p-6 flex flex-col shadow-2xl border border-black/10 dark:border-white/10 text-[#1f1f1f] dark:text-[#e3e3e3] overflow-hidden relative">
         
         {/* Loading Progress Bar */}
         {(isLoading || isDriveSyncing) && (
@@ -253,13 +288,18 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
             )}
             <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white dark:bg-[#282a2c] shadow flex items-center justify-center text-neutral-600 dark:text-neutral-300 border border-black/10 dark:border-white/10">
               <span className="material-symbols-outlined text-[14px]">
-                {hasAccessToken ? 'cloud_done' : 'account_circle'}
+                {hasAccessToken ? 'cloud_done' : currentUser.authProvider === 'google' ? 'verified_user' : 'account_circle'}
               </span>
             </div>
           </div>
 
-          <div className="mt-2.5 font-bold text-base text-neutral-900 dark:text-neutral-100 text-center">
-            {currentUser.name}
+          <div className="mt-2 font-bold text-base text-neutral-900 dark:text-neutral-100 text-center flex items-center gap-1.5">
+            <span>{currentUser.name}</span>
+            {currentUser.isDemo && (
+              <span className="text-[10px] px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full font-bold">
+                Guest / Demo
+              </span>
+            )}
           </div>
           <div className="text-xs text-neutral-500 dark:text-neutral-400 text-center">
             {currentUser.email}
@@ -283,7 +323,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
           <button
             onClick={handleRealGoogleSignIn}
             disabled={isLoading}
-            className="w-full py-3 px-4 rounded-full border border-black/15 dark:border-white/20 bg-white dark:bg-[#131314] text-neutral-800 dark:text-neutral-100 flex items-center justify-center gap-3 font-medium text-xs sm:text-sm shadow-sm hover:shadow-md tap-press transition-all"
+            className="w-full py-3 px-4 rounded-full border border-black/15 dark:border-white/20 bg-white dark:bg-[#131314] text-neutral-800 dark:text-neutral-100 flex items-center justify-center gap-3 font-medium text-xs sm:text-sm shadow-sm hover:shadow-md tap-press transition-all cursor-pointer"
           >
             <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -303,7 +343,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
             <button
               onClick={handleSyncToDriveNow}
               disabled={isDriveSyncing}
-              className="flex-1 py-2.5 px-3 rounded-2xl bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm tap-press transition-all"
+              className="flex-1 py-2.5 px-3 rounded-2xl bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm tap-press transition-all cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">cloud_upload</span>
               <span>{isDriveSyncing ? 'Syncing...' : 'Sync to Drive'}</span>
@@ -328,32 +368,61 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
               {users.map((u) => (
                 <div
                   key={u.id}
-                  onClick={() => {
-                    onSwitchUser(u);
-                    onClose();
-                  }}
-                  className={`p-2.5 rounded-xl flex items-center justify-between cursor-pointer tap-press transition-colors ${
+                  className={`p-2.5 rounded-xl flex items-center justify-between transition-colors ${
                     u.id === currentUser.id
                       ? 'bg-black/10 dark:bg-white/10 font-bold'
                       : 'bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div
+                    onClick={() => {
+                      onSwitchUser(u);
+                      onClose();
+                    }}
+                    className="flex items-center gap-2.5 flex-1 cursor-pointer tap-press"
+                  >
                     {u.avatarUrl ? (
-                      <img src={u.avatarUrl} alt={u.name} className="w-7 h-7 rounded-full object-cover" />
+                      <img src={u.avatarUrl} alt={u.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
                     ) : (
-                      <div className="w-7 h-7 rounded-full bg-[#1a73e8] text-white text-xs font-bold flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-full bg-[#1a73e8] text-white text-xs font-bold flex items-center justify-center shrink-0">
                         {u.initial}
                       </div>
                     )}
-                    <div>
-                      <div className="text-xs text-neutral-900 dark:text-neutral-100">{u.name}</div>
-                      <div className="text-[10px] text-neutral-500">{u.email}</div>
+                    <div className="overflow-hidden">
+                      <div className="text-xs text-neutral-900 dark:text-neutral-100 truncate flex items-center gap-1">
+                        <span>{u.name}</span>
+                        {u.authProvider === 'google' && (
+                          <span className="text-[9px] text-blue-500 font-normal">● Google</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-neutral-500 truncate">{u.email}</div>
                     </div>
                   </div>
-                  {u.id === currentUser.id && (
-                    <span className="material-symbols-outlined text-[16px] text-emerald-500">check</span>
-                  )}
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    {u.id === currentUser.id ? (
+                      <span className="material-symbols-outlined text-[16px] text-emerald-500">check</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSwitchUser(u);
+                          onClose();
+                        }}
+                        className="text-[11px] font-bold text-[#1a73e8] px-2 py-0.5 rounded-md hover:bg-blue-500/10"
+                      >
+                        Switch
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setUserToDelete(u)}
+                      className="w-6 h-6 rounded-md hover:bg-red-500/10 text-neutral-400 hover:text-red-500 flex items-center justify-center"
+                      title="Delete profile"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">close</span>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -378,7 +447,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
           {showConfig && (
             <div className="p-3.5 rounded-2xl bg-black/5 dark:bg-white/5 mt-2 flex flex-col gap-2.5 text-xs animate-in fade-in duration-150">
               <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed text-[11px]">
-                Chrome-এর আসল এক-ক্লিক সাইন-ইন ও রিয়েল Google Drive অ্যাক্সেসের জন্য Google Cloud Console থেকে একটি 100% ফ্রি Web Client ID দিন:
+                Google Cloud Console থেকে Web Client ID দিন:
               </p>
               <form onSubmit={handleSaveClientId} className="flex flex-col gap-2">
                 <input
@@ -407,15 +476,15 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 </div>
               </form>
 
-              {/* Instant Scratch Demo without GCP setup */}
+              {/* Instant Scratch Account */}
               <div className="pt-2 border-t border-black/10 dark:border-white/10 flex flex-col gap-1.5">
                 <span className="text-[10px] uppercase font-bold text-neutral-400">
-                  Or Quick Start From Scratch:
+                  Or Quick Local Workspace:
                 </span>
                 <div className="flex gap-1.5">
                   <input
                     type="email"
-                    placeholder="Enter your Gmail"
+                    placeholder="Enter email address"
                     value={quickEmail}
                     onChange={(e) => setQuickEmail(e.target.value)}
                     className="flex-1 px-2.5 py-1.5 rounded-xl bg-gLight-bg dark:bg-gDark-bg border border-black/10 dark:border-white/10 text-xs"
@@ -425,7 +494,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                     onClick={() => handleQuickScratchSignIn()}
                     className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs shrink-0"
                   >
-                    Start Scratch
+                    Start Local
                   </button>
                 </div>
               </div>
@@ -459,7 +528,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 const defaultUser = users[0] || currentUser;
                 onSwitchUser(defaultUser);
               }
-              onShowToast('Google অ্যাকাউন্ট সাইন আউট করা হয়েছে', 'logout');
+              onShowToast('সাইন আউট সম্পন্ন হয়েছে', 'logout');
               onClose();
             }}
             className="hover:text-neutral-800 dark:hover:text-neutral-200 inline-flex items-center gap-1 text-[11px]"
@@ -469,6 +538,37 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Confirmation Dialog for Profile Deletion */}
+      {userToDelete && (
+        <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#1e1f20] rounded-2xl max-w-xs w-full p-4 flex flex-col gap-3 shadow-2xl border border-black/10 dark:border-white/10 text-left">
+            <h4 className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px]">delete</span>
+              <span>প্রোফাইল মুছবেন?</span>
+            </h4>
+            <p className="text-[11px] text-neutral-600 dark:text-neutral-300">
+              <strong>{userToDelete.name}</strong> ({userToDelete.email}) ডিলিট করবেন?
+            </p>
+            <div className="flex flex-col gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => handleConfirmDeleteProfile(true)}
+                className="w-full py-1.5 px-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] text-center"
+              >
+                সব ডাটা সহ পার্মানেন্ট ডিলিট
+              </button>
+              <button
+                type="button"
+                onClick={() => setUserToDelete(null)}
+                className="w-full py-1 text-[11px] text-neutral-400 hover:text-neutral-200 text-center"
+              >
+                বাতিল
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

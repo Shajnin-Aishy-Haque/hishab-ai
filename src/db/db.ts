@@ -30,7 +30,17 @@ export const DEFAULT_USER: UserProfile = {
   name: 'Nafis Walid',
   email: 'nafiswalid.work@gmail.com',
   avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocLwn2LYA4adPbJ1gPWsfXCNQcmMz7wyjyIgbEcwbHZJAzaO_Q=s96-c',
-  initial: 'N'
+  initial: 'N',
+  authProvider: 'google'
+};
+
+export const GUEST_DEMO_USER: UserProfile = {
+  id: 'user_guest_demo',
+  name: 'Guest User (গেস্ট)',
+  email: 'guest@hishab.local',
+  initial: 'G',
+  authProvider: 'guest',
+  isDemo: true
 };
 
 /**
@@ -98,12 +108,75 @@ export const STARTER_CATEGORIES = [
 ];
 
 /**
- * Initialize workspace for a user.
- * Real Google users or new signups start completely from scratch (0 balance, 0 transactions, 0 dhar).
+ * Resolve existing user profile by email or ID, avoiding duplicates
+ * and linking Google OAuth credentials seamlessly with local profiles.
  */
-export async function initializeUserData(userId: string = DEFAULT_USER.id, isFromScratch = true) {
-  // All active accounts start from scratch with 0 balance, 0 transactions, 0 dhar
-  const isScratchUser = isFromScratch || userId !== 'user_demo_sample';
+export async function resolveOrLinkUser(params: {
+  email: string;
+  name?: string;
+  avatarUrl?: string;
+  googleSub?: string;
+  authProvider: 'google' | 'email' | 'guest';
+}): Promise<{ user: UserProfile; isNewlyCreated: boolean }> {
+  const cleanEmail = params.email.trim().toLowerCase();
+
+  // 1. Look up existing profile by normalized email (Indexed in Dexie)
+  const existingUser = await db.users.where('email').equalsIgnoreCase(cleanEmail).first();
+
+  if (existingUser) {
+    // Preserve existing user ID so previous transactions, accounts, and Dhar records are retained!
+    const updated: UserProfile = {
+      ...existingUser,
+      name: params.name?.trim() || existingUser.name,
+      avatarUrl: params.avatarUrl || existingUser.avatarUrl,
+      authProvider: params.authProvider === 'google' ? 'google' : existingUser.authProvider || params.authProvider,
+      googleSub: params.googleSub || existingUser.googleSub,
+      lastLoginAt: Date.now()
+    };
+    await db.users.put(updated);
+    return { user: updated, isNewlyCreated: false };
+  }
+
+  // 2. Fresh User: generate deterministic safe ID
+  const deterministicId =
+    params.authProvider === 'google' && params.googleSub
+      ? `google_${params.googleSub}`
+      : params.authProvider === 'guest'
+      ? GUEST_DEMO_USER.id
+      : `user_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`;
+
+  const formattedName =
+    params.name?.trim() ||
+    (cleanEmail.split('@')[0] || 'User')
+      .replace(/[._-]/g, ' ')
+      .split(' ')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+
+  const newUser: UserProfile = {
+    id: deterministicId,
+    name: formattedName,
+    email: cleanEmail,
+    avatarUrl: params.avatarUrl,
+    initial: formattedName.charAt(0).toUpperCase(),
+    authProvider: params.authProvider,
+    googleSub: params.googleSub,
+    createdAt: Date.now(),
+    lastLoginAt: Date.now(),
+    isDemo: params.authProvider === 'guest'
+  };
+
+  await db.users.put(newUser);
+  return { user: newUser, isNewlyCreated: true };
+}
+
+/**
+ * Initialize workspace for a user.
+ * Genuine users start completely from scratch (0 balance, 0 transactions, 0 dhar).
+ * Guest/Demo users are seeded with realistic sample data for instant exploration.
+ */
+export async function initializeUserData(userId: string = DEFAULT_USER.id, _isFromScratch = true) {
+  const isDemo = userId === GUEST_DEMO_USER.id || userId === 'user_demo_sample';
 
   const accountsCount = await db.accounts.where('userId').equals(userId).count();
   if (accountsCount === 0) {
@@ -113,7 +186,7 @@ export async function initializeUserData(userId: string = DEFAULT_USER.id, isFro
         userId,
         name: 'Cash',
         type: 'cash',
-        balance: isScratchUser ? 0 : 5200,
+        balance: isDemo ? 5200 : 0,
         note: 'পকেট ক্যাশ',
         icon: '💵',
         color: '#137333'
@@ -123,7 +196,7 @@ export async function initializeUserData(userId: string = DEFAULT_USER.id, isFro
         userId,
         name: 'bKash',
         type: 'bkash',
-        balance: isScratchUser ? 0 : 8400,
+        balance: isDemo ? 8400 : 0,
         note: 'Personal Wallet',
         icon: '📱',
         color: '#e91e63'
@@ -133,7 +206,7 @@ export async function initializeUserData(userId: string = DEFAULT_USER.id, isFro
         userId,
         name: 'Nagad',
         type: 'nagad',
-        balance: isScratchUser ? 0 : 2300,
+        balance: isDemo ? 2300 : 0,
         note: 'Personal Wallet',
         icon: '🟧',
         color: '#f57c00'
@@ -143,7 +216,7 @@ export async function initializeUserData(userId: string = DEFAULT_USER.id, isFro
         userId,
         name: 'City Bank',
         type: 'bank',
-        balance: isScratchUser ? 0 : 35000,
+        balance: isDemo ? 35000 : 0,
         note: 'Primary Bank A/C',
         icon: '🏦',
         color: '#1a73e8'
@@ -159,15 +232,15 @@ export async function initializeUserData(userId: string = DEFAULT_USER.id, isFro
         userId,
         name: cat.name,
         icon: cat.icon,
-        budget: isScratchUser ? 0 : (idx === 0 ? 15000 : idx === 1 ? 4000 : 6000),
+        budget: isDemo ? (idx === 0 ? 15000 : idx === 1 ? 4000 : 6000) : 0,
         color: cat.color,
         keywords: cat.keywords
       }))
     );
   }
 
-  // Transactions & Dhar are ONLY added for the demo account 'user_default'
-  if (!isScratchUser) {
+  // Transactions & Dhar are ONLY added for demo/sample accounts
+  if (isDemo) {
     const dharCount = await db.dharItems.where('userId').equals(userId).count();
     if (dharCount === 0) {
       const today = getLocalDateString();
@@ -256,6 +329,22 @@ export async function resetUserDataToScratch(userId: string) {
     for (const acc of accounts) {
       await db.accounts.update(acc.id, { balance: 0 });
     }
+  });
+}
+
+/**
+ * Completely purge a user profile and all corresponding data
+ * (transactions, accounts, categories, dharItems, settings) from IndexedDB.
+ * Eliminates orphaned records and database bloat.
+ */
+export async function purgeUserProfileAndData(userId: string): Promise<void> {
+  await db.transaction('rw', [db.users, db.transactions, db.accounts, db.categories, db.dharItems, db.settings], async () => {
+    await db.transactions.where('userId').equals(userId).delete();
+    await db.accounts.where('userId').equals(userId).delete();
+    await db.categories.where('userId').equals(userId).delete();
+    await db.dharItems.where('userId').equals(userId).delete();
+    await db.settings.where('userId').equals(userId).delete();
+    await db.users.delete(userId);
   });
 }
 
