@@ -302,7 +302,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
             )}
           </div>
           <div className="text-xs text-neutral-500 dark:text-neutral-400 text-center">
-            {currentUser.email}
+            {currentUser.email || 'Local Offline Account'}
           </div>
 
           {/* Drive Status Badge */}
@@ -395,7 +395,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                           <span className="text-[9px] text-blue-500 font-normal">● Google</span>
                         )}
                       </div>
-                      <div className="text-[10px] text-neutral-500 truncate">{u.email}</div>
+                      <div className="text-[10px] text-neutral-500 truncate">{u.email || 'Local Offline Account'}</div>
                     </div>
                   </div>
 

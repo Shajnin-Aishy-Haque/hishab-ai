@@ -261,7 +261,7 @@ export const WelcomeGate: React.FC<WelcomeGateProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Nafis Walid"
+                  placeholder="e.g. Shakib Ahmed"
                   value={signupName}
                   onChange={(e) => setSignupName(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/15 text-xs text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#1a73e8]"
@@ -454,7 +454,7 @@ export const WelcomeGate: React.FC<WelcomeGateProps> = ({
 
       {/* Footer */}
       <div className="w-full max-w-md pt-2 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[11px] text-neutral-400">
-        <span>Hishab AI • Nafis Walid</span>
+        <span>Hishab AI • Personal Finance</span>
         <div className="flex gap-2 font-medium">
           <span>100% Free &amp; Private</span>
           <span>•</span>

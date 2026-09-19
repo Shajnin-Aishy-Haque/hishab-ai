@@ -26,12 +26,11 @@ export class HishabDatabase extends Dexie {
 export const db = new HishabDatabase();
 
 export const DEFAULT_USER: UserProfile = {
-  id: 'user_nafis',
-  name: 'Nafis Walid',
-  email: 'nafiswalid.work@gmail.com',
-  avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocLwn2LYA4adPbJ1gPWsfXCNQcmMz7wyjyIgbEcwbHZJAzaO_Q=s96-c',
-  initial: 'N',
-  authProvider: 'google'
+  id: 'user_local',
+  name: 'My Wallet',
+  email: '',
+  initial: 'M',
+  authProvider: 'email'
 };
 
 export const GUEST_DEMO_USER: UserProfile = {

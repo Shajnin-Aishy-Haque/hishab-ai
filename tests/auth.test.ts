@@ -4,10 +4,10 @@ import { isValidEmail, formatGoogleAuthError } from '../src/services/googleAuth.
 
 test('validates emails correctly according to RFC 5322 rules', () => {
   // Valid emails
-  assert.equal(isValidEmail('nafis@gmail.com'), true);
+  assert.equal(isValidEmail('user@gmail.com'), true);
   assert.equal(isValidEmail('user.name+tag@sub.domain.org'), true);
   assert.equal(isValidEmail('student@dept.ruet.ac.bd'), true);
-  assert.equal(isValidEmail('nafiswalid.work@gmail.com'), true);
+  assert.equal(isValidEmail('finance.tracker@example.com'), true);
 
   // Invalid emails
   assert.equal(isValidEmail(''), false);
@@ -62,33 +62,33 @@ test('ensures token expiry validation handles 60-second safety buffer correctly'
 });
 
 test('verifies email normalization and deterministic user ID creation', () => {
-  const rawEmail = '  Nafis.Walid@Gmail.COM  ';
+  const rawEmail = '  Sample.User@Gmail.COM  ';
   const cleanEmail = rawEmail.trim().toLowerCase();
-  assert.equal(cleanEmail, 'nafis.walid@gmail.com');
+  assert.equal(cleanEmail, 'sample.user@gmail.com');
 
   const deterministicId = `user_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`;
-  assert.equal(deterministicId, 'user_nafis_walid_gmail_com');
+  assert.equal(deterministicId, 'user_sample_user_gmail_com');
 
-  const name = 'Nafis Walid';
+  const name = 'Sample User';
   const initial = name.trim().charAt(0).toUpperCase();
-  assert.equal(initial, 'N');
+  assert.equal(initial, 'S');
 });
 
 test('preserves user ID when account linking existing local user with Google credentials', () => {
   // Mock pre-existing local user created via Direct Email
   const existingLocalUser = {
-    id: 'user_nafis_work_gmail_com',
-    name: 'Nafis Walid',
-    email: 'nafis.work@gmail.com',
-    initial: 'N',
+    id: 'user_sample_user_gmail_com',
+    name: 'Sample User',
+    email: 'sample.user@gmail.com',
+    initial: 'S',
     authProvider: 'email' as const
   };
 
   // Google OAuth payload for the same email
   const googlePayload = {
     sub: '10987654321',
-    name: 'Nafis Walid',
-    email: 'nafis.work@gmail.com',
+    name: 'Sample User',
+    email: 'sample.user@gmail.com',
     picture: 'https://lh3.googleusercontent.com/avatar.png'
   };
 
@@ -106,7 +106,7 @@ test('preserves user ID when account linking existing local user with Google cre
 
   // Crucial check: The user ID must NOT change to google_10987654321,
   // preventing all previous transactions, accounts, and Dhar records from being orphaned!
-  assert.equal(linkedUser.id, 'user_nafis_work_gmail_com');
+  assert.equal(linkedUser.id, 'user_sample_user_gmail_com');
   assert.equal(linkedUser.authProvider, 'google');
   assert.equal(linkedUser.avatarUrl, 'https://lh3.googleusercontent.com/avatar.png');
   assert.equal(linkedUser.googleSub, '10987654321');

@@ -67,16 +67,18 @@ export const Header: React.FC<HeaderProps> = ({
           </span>
         </button>
 
-        {/* Google Profile Avatar */}
+        {/* User Profile / Settings Button */}
         <button
           onClick={onOpenUserModal}
-          title={`Signed in as ${user.name} (${user.email})`}
-          className="w-9 h-9 rounded-full overflow-hidden bg-[#1a73e8] text-white flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-blue-500/20 cursor-pointer tap-press hover:opacity-90 transition-opacity"
+          title={user.email ? `Profile: ${user.name} (${user.email})` : 'Account & Drive Settings'}
+          className="w-9 h-9 rounded-full overflow-hidden bg-gLight-surface dark:bg-gDark-surface text-gLight-textPrimary dark:text-gDark-textPrimary flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-black/10 dark:ring-white/10 cursor-pointer tap-press hover:opacity-90 transition-opacity"
         >
           {user.avatarUrl ? (
             <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-          ) : (
+          ) : user.email ? (
             user.initial || user.name.charAt(0).toUpperCase()
+          ) : (
+            <span className="material-symbols-outlined text-[20px]">account_circle</span>
           )}
         </button>
       </div>

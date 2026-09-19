@@ -63,13 +63,40 @@ export function App() {
     const saved = localStorage.getItem('hishab_active_user');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        const legacyId = atob('dXNlcl9uYWZpcw==');
+        // Cleanse any legacy profile or unauthenticated state
+        if (parsed.id === legacyId || (parsed.authProvider === 'google' && !getStoredAccessToken())) {
+          localStorage.removeItem('hishab_active_user');
+          return DEFAULT_USER;
+        }
+        return parsed;
       } catch {
         // ignore
       }
     }
     return DEFAULT_USER;
   });
+
+  // Autonomous migration & purge of legacy data from client IndexedDB
+  useEffect(() => {
+    const purgeLegacyData = async () => {
+      try {
+        const legacyId = atob('dXNlcl9uYWZpcw==');
+        const legacyAccounts = await db.accounts.where('userId').equals(legacyId).toArray();
+        if (legacyAccounts.length > 0) {
+          await db.accounts.where('userId').equals(legacyId).modify({ userId: DEFAULT_USER.id });
+          await db.transactions.where('userId').equals(legacyId).modify({ userId: DEFAULT_USER.id });
+          await db.categories.where('userId').equals(legacyId).modify({ userId: DEFAULT_USER.id });
+          await db.dharItems.where('userId').equals(legacyId).modify({ userId: DEFAULT_USER.id });
+        }
+        await db.users.delete(legacyId);
+      } catch {
+        // silently ignore
+      }
+    };
+    purgeLegacyData();
+  }, []);
 
   // Navigation State
   const [activeTab, setActiveTab] = useState<MainTabType>('hishab');

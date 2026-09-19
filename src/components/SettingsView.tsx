@@ -90,7 +90,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 Google Drive Backup
               </div>
               <div className="text-xs text-gLight-textSecondary dark:text-gDark-textSecondary">
-                {user.email}
+                {user.email || 'Click to connect Google Account'}
               </div>
             </div>
           </div>
@@ -125,7 +125,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="flex items-center justify-between text-xs text-gLight-textTertiary dark:text-gDark-textTertiary">
             <span>Active Profile:</span>
             <span className="text-gLight-textPrimary dark:text-gDark-textPrimary font-medium">
-              {user.name} ({user.email})
+              {user.email ? `${user.name} (${user.email})` : user.name}
             </span>
           </div>
         </div>
