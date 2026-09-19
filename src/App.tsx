@@ -4,11 +4,8 @@ import {
   db,
   initializeUserData,
   DEFAULT_USER,
-  GUEST_DEMO_USER,
   resetUserDataToScratch,
-  updateStartingBalances,
-  resolveOrLinkUser,
-  purgeUserProfileAndData
+  updateStartingBalances
 } from './db/db';
 import type {
   Account,
@@ -25,17 +22,11 @@ import type { ScanReceiptResult } from './services/geminiVision';
 import {
   getStoredAccessToken,
   getStoredGoogleClientId,
-  requestRealGoogleOAuth,
   clearGoogleSession,
-  silentRefreshAccessToken,
-  formatGoogleAuthError
+  silentRefreshAccessToken
 } from './services/googleAuth';
-import {
-  uploadToGoogleDrive,
-  findDriveBackupFile,
-  downloadFromGoogleDrive
-} from './services/googleDriveApi';
-import { createDatabaseSnapshot, importBackupFile } from './services/driveSync';
+import { uploadToGoogleDrive } from './services/googleDriveApi';
+import { createDatabaseSnapshot } from './services/driveSync';
 import { getLocalDateString, getLocalTimeString } from './utils/dateUtils';
 
 import { Header } from './components/Header';
@@ -60,17 +51,11 @@ import { ReceiptScannerModal } from './components/ReceiptScannerModal';
 import { AIAdvisorModal } from './components/AIAdvisorModal';
 import { GoogleAuthModal } from './components/GoogleAuthModal';
 import { OnboardingModal } from './components/OnboardingModal';
-import { WelcomeGate } from './components/WelcomeGate';
 
 export function App() {
   // Theme state
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('hishab_theme') as 'dark' | 'light') || 'dark';
-  });
-
-  // Login Gate State
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem('hishab_is_logged_in') === 'true';
   });
 
   // User Profile State (Per-user data)
@@ -103,8 +88,6 @@ export function App() {
   const [isGoogleAuthModalOpen, setIsGoogleAuthModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [onboardingUser, setOnboardingUser] = useState<UserProfile | null>(null);
-  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
-  const [authError, setAuthError] = useState<{ title: string; message: string } | null>(null);
 
   // Sync animation text
   const [syncText, setSyncText] = useState('Drive: Auto-Synced');
@@ -131,21 +114,17 @@ export function App() {
     localStorage.setItem('hishab_theme', theme);
   }, [theme]);
 
-  // Initialize DB for current user on boot or switch - ONLY when authenticated
+  // Initialize DB for current user on boot or switch
   useEffect(() => {
-    if (!isLoggedIn) return; // Strict security & hygiene: never mutate DB for unauthenticated visitors
     initializeUserData(currentUser.id, !currentUser.isDemo).catch((err) =>
       console.error('DB Init Error:', err)
     );
     localStorage.setItem('hishab_active_user', JSON.stringify(currentUser));
-  }, [currentUser, isLoggedIn]);
+  }, [currentUser]);
 
   // Multi-tab Storage Synchronization
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'hishab_is_logged_in') {
-        setIsLoggedIn(e.newValue === 'true');
-      }
       if (e.key === 'hishab_active_user' && e.newValue) {
         try {
           setCurrentUser(JSON.parse(e.newValue));
@@ -243,167 +222,25 @@ export function App() {
 
   // Debounced auto-sync when transactions or accounts mutate
   useEffect(() => {
-    if (!isLoggedIn) return;
     const timer = setTimeout(() => {
       backgroundSyncToDrive();
     }, 1800);
     return () => clearTimeout(timer);
-  }, [transactions.length, accounts, dharItems.length, isLoggedIn]);
+  }, [transactions.length, accounts, dharItems.length]);
 
   // Auto-sync when reconnecting from offline state
   useEffect(() => {
-    if (!isLoggedIn) return;
     const handleOnline = () => {
       showToast('সংযোগ সক্রিয়! Drive ব্যাকআপ সিঙ্ক হচ্ছে...', 'cloud_sync');
       backgroundSyncToDrive();
     };
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [isLoggedIn, currentUser.id]);
-
-  const handleGoogleSignIn = () => {
-    const clientId = getStoredGoogleClientId();
-    if (!clientId) {
-      setAuthError({
-        title: 'Missing Client ID',
-        message: 'Google Client ID পাওয়া যায়নি। অনুগ্রহ করে সেটিংস থেকে সেট করুন।'
-      });
-      return;
-    }
-
-    setIsGoogleSigningIn(true);
-    setAuthError(null);
-
-    requestRealGoogleOAuth(
-      clientId,
-      async (userInfo, accessToken) => {
-        setIsGoogleSigningIn(false);
-        try {
-          // Centralized account linking: merges with local profile if matching email exists
-          const { user: linkedUser, isNewlyCreated } = await resolveOrLinkUser({
-            email: userInfo.email,
-            name: userInfo.name,
-            avatarUrl: userInfo.picture,
-            googleSub: userInfo.sub,
-            authProvider: 'google'
-          });
-
-          await initializeUserData(linkedUser.id, isNewlyCreated);
-
-          let hasRestoredBackup = false;
-          // Check if Google Drive has existing backup
-          try {
-            setSyncText('Checking Drive...');
-            const existingFile = await findDriveBackupFile(accessToken);
-            if (existingFile) {
-              const backupData = await downloadFromGoogleDrive(accessToken, existingFile.id);
-              const blob = new Blob([JSON.stringify(backupData)], { type: 'application/json' });
-              const file = new File([blob], 'drive_backup.json');
-              await importBackupFile(file, linkedUser.id);
-              hasRestoredBackup = true;
-              showToast('Google Drive ব্যাকআপ রিস্টোর সম্পন্ন!', 'cloud_download');
-            } else {
-              const snapshot = await createDatabaseSnapshot(linkedUser.id);
-              await uploadToGoogleDrive(accessToken, snapshot);
-              setSyncText('Drive: Synced');
-            }
-          } catch (driveErr) {
-            console.warn('Drive initial sync notice:', driveErr);
-          }
-
-          setCurrentUser(linkedUser);
-          localStorage.setItem('hishab_active_user', JSON.stringify(linkedUser));
-          localStorage.setItem('hishab_is_logged_in', 'true');
-          setIsLoggedIn(true);
-
-          if (isNewlyCreated && !hasRestoredBackup) {
-            setOnboardingUser(linkedUser);
-            setIsOnboardingOpen(true);
-            showToast(`স্বাগতম, ${linkedUser.name}! ওয়ালেট ব্যালেন্স সেট করুন।`, 'person_add');
-          } else {
-            showToast(`স্বাগতম, ${linkedUser.name}! হিসাব প্রস্তুত।`, 'cloud_done');
-          }
-        } catch (err: any) {
-          const formatted = formatGoogleAuthError(err);
-          setAuthError(formatted);
-          showToast(formatted.message, 'error');
-        }
-      },
-      (err: any) => {
-        setIsGoogleSigningIn(false);
-        const formatted = formatGoogleAuthError(err);
-        setAuthError(formatted);
-        showToast(formatted.message, 'error');
-      }
-    );
-  };
-
-  const handleEmailAuth = async (email: string, name?: string, isNewSignup = false) => {
-    setAuthError(null);
-    try {
-      const { user: profile, isNewlyCreated } = await resolveOrLinkUser({
-        email,
-        name,
-        authProvider: 'email'
-      });
-
-      await initializeUserData(profile.id, isNewlyCreated);
-      setCurrentUser(profile);
-      localStorage.setItem('hishab_active_user', JSON.stringify(profile));
-      localStorage.setItem('hishab_is_logged_in', 'true');
-      setIsLoggedIn(true);
-
-      if (isNewlyCreated || isNewSignup) {
-        setOnboardingUser(profile);
-        setIsOnboardingOpen(true);
-        showToast(`স্বাগতম, ${profile.name}! ওয়ালেট সাজিয়ে নিন।`, 'person_add');
-      } else {
-        showToast(`স্বাগতম, ${profile.name}!`, 'check_circle');
-      }
-    } catch (err: any) {
-      showToast(`লগইন ব্যর্থ: ${err.message}`, 'error');
-    }
-  };
-
-  const handleGuestSignIn = async () => {
-    setAuthError(null);
-    try {
-      const guestUser = GUEST_DEMO_USER;
-      await db.users.put(guestUser);
-      await initializeUserData(guestUser.id, false); // Seeds realistic demo accounts & transactions
-      setCurrentUser(guestUser);
-      localStorage.setItem('hishab_active_user', JSON.stringify(guestUser));
-      localStorage.setItem('hishab_is_logged_in', 'true');
-      setIsLoggedIn(true);
-      showToast('গেস্ট মোডে স্বাগতম! হিসাবের ডেমো ডাটা প্রস্তুত।', 'rocket_launch');
-    } catch (err: any) {
-      showToast(`গেস্ট লগইন ব্যর্থ: ${err.message}`, 'error');
-    }
-  };
-
-  const handleDeleteSavedUser = async (userId: string, purgeData = false) => {
-    try {
-      if (purgeData) {
-        await purgeUserProfileAndData(userId);
-        showToast('প্রোফাইল এবং সকল লোকাল ডাটা স্থায়ীভাবে মোছা হয়েছে।', 'delete_forever');
-      } else {
-        await db.users.delete(userId);
-        showToast('প্রোফাইল ডিভাইস থেকে সরানো হয়েছে।', 'delete');
-      }
-
-      if (currentUser.id === userId) {
-        handleSignOut();
-      }
-    } catch (err: any) {
-      showToast(`মুছতে ব্যর্থ: ${err.message}`, 'error');
-    }
-  };
+  }, [currentUser.id]);
 
   const handleSignOut = () => {
     clearGoogleSession();
-    localStorage.removeItem('hishab_is_logged_in');
-    setIsLoggedIn(false);
-    showToast('লগআউট সম্পন্ন হয়েছে।', 'logout');
+    showToast('Google Drive সেশন সাইন আউট করা হয়েছে।', 'logout');
   };
 
   // Handlers for transactions
@@ -789,31 +626,6 @@ export function App() {
 
   const totalMonthlyBudget = categories.reduce((sum, c) => sum + (c.budget || 0), 0) || 35000;
   const totalMonthlySpent = transactions.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-
-  if (!isLoggedIn) {
-    return (
-      <>
-        <Toast message={toastMsg} icon={toastIcon} visible={toastVisible} />
-        <WelcomeGate
-          onGoogleSignIn={handleGoogleSignIn}
-          onDirectEmailSignIn={handleEmailAuth}
-          onGuestSignIn={handleGuestSignIn}
-          savedUsers={allUsers}
-          onSelectSavedUser={(u) => {
-            setCurrentUser(u);
-            localStorage.setItem('hishab_active_user', JSON.stringify(u));
-            localStorage.setItem('hishab_is_logged_in', 'true');
-            setIsLoggedIn(true);
-            showToast(`স্বাগতম, ${u.name}!`, 'check_circle');
-          }}
-          onDeleteSavedUser={handleDeleteSavedUser}
-          isLoading={isGoogleSigningIn}
-          authError={authError}
-          onClearAuthError={() => setAuthError(null)}
-        />
-      </>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gLight-bg dark:bg-gDark-bg flex flex-col transition-colors duration-150">
